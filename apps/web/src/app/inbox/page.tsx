@@ -63,6 +63,14 @@ export default function InboxPage() {
   // comporta como "lista o lectura, una a la vez" (igual que Gmail mobile),
   // sin pisar la preferencia de columnas que el usuario eligió para desktop.
   const effectiveColumns = isMobile ? 2 : columns;
+  // sidebarCollapsed arranca en false porque en desktop es una columna fija
+  // (mostrarla no tapa nada) — pero en mobile pasa a ser un drawer que flota
+  // ENCIMA de todo, así que si no se cierra acá el usuario abriría la app y
+  // vería el menú tapando la bandeja en vez de sus correos.
+  useEffect(() => {
+    if (isMobile) closeSidebar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   // Conteo por categoría de TODA la carpeta/bandeja (lo calcula el
