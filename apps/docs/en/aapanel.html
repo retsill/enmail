@@ -67,16 +67,31 @@ nano .env   # fill in domain, passwords and secrets</code></pre>
         <p>You have two ways to do this — they do exactly the same thing:</p>
 
         <h4>Using aaPanel's Docker interface (no terminal)</h4>
+        <p>The <strong>Docker Compose</strong> tab in the Docker plugin (NOT the "Container" tab: that one creates a single container by hand — enMail is 3 services coordinated by one <code>docker-compose.yml</code>) works by pasting content in, not by pointing at a folder:</p>
         <ol>
-          <li>Left menu → <strong>Docker</strong> → <strong>Docker Compose</strong> tab (NOT the "Container" tab: that one creates a single container by hand, one at a time — enMail is 3 services coordinated by one <code>docker-compose.yml</code>, so you need the "Docker Compose" tab).</li>
-          <li>Click <strong>Add project</strong> / <strong>Create</strong>. Give it a name (e.g. <code>enmail</code>).</li>
-          <li>Under "Path"/"Directory", point it at the folder where you cloned the project (e.g. <code>/www/wwwroot/enmail</code>) — aaPanel will read the <code>docker-compose.yml</code> already there. If your aaPanel version asks you to paste the compose content instead of a path, open <code>docker-compose.yml</code> in File Manager and copy/paste its contents in.</li>
-          <li>Confirm/Deploy. aaPanel runs the equivalent of <code>docker compose up -d --build</code> and will show the status of the 3 containers (<code>db</code>, <code>api</code>, <code>web</code>) in the Container tab once they're up.</li>
+          <li>Left menu → <strong>Docker</strong> → <strong>Docker Compose</strong> tab → <strong>Add Compose</strong> button (leave the "General Creation" tab selected).</li>
+          <li><strong>Compose Name:</strong> e.g. <code>enmail</code>.</li>
+          <li><strong>Compose Content:</strong> open the project's <code>docker-compose.yml</code> (already cloned in step 2, e.g. with aaPanel's File Manager) and paste its whole content here.
+            <div class="callout callout-warning"><span class="callout-title">One change needed before pasting</span><p>aaPanel stores this compose in its own internal folder, not in <code>/www/wwwroot/enmail</code> — so <code>context: .</code> no longer points at your code. Before pasting, replace <code>context: .</code> with the project's absolute path in the two services that build an image (<code>api</code> and <code>web</code>):</p>
+              <pre><code>  api:
+    build:
+      context: /www/wwwroot/enmail
+      dockerfile: apps/api/Dockerfile
+  ...
+  web:
+    build:
+      context: /www/wwwroot/enmail
+      dockerfile: apps/web/Dockerfile</code></pre></div>
+          </li>
+          <li><strong>.env Content:</strong> paste the full content of your already-edited <code>.env</code> (with your real domain, passwords and secrets).</li>
+          <li><strong>Confirm.</strong> aaPanel runs the equivalent of <code>docker compose up -d --build</code> — you'll see the build progress and, once done, the status of the 3 containers (<code>db</code>, <code>api</code>, <code>web</code>) in the Container tab.</li>
         </ol>
-        <div class="callout callout-tip"><span class="callout-title">If your aaPanel doesn't have 'Docker Compose'</span><p>Older versions of aaPanel's Docker plugin don't include the Docker Compose tab. In that case, use aaPanel's built-in Terminal (left menu → <strong>Terminal</strong>) to run the command below — same result, without leaving the browser.</p></div>
+        <div class="callout callout-tip"><span class="callout-title">What's 'Template List' for?</span><p>It's just for saving reusable composes across projects (by checking "Also Save as Template" when creating one) — not needed to install enMail, you can ignore it.</p></div>
 
         <h4>Using a command (aaPanel Terminal or SSH)</h4>
-        <pre><code>docker compose up -d --build</code></pre>
+        <p>If you'd rather not paste the compose by hand, this gives the same result by running it inside the project folder — no <code>context</code> issue, since it runs from the real folder:</p>
+        <pre><code>cd /www/wwwroot/enmail
+docker compose up -d --build</code></pre>
 
         <h3>4. Create the sites in aaPanel</h3>
         <p>Under <strong>Website → Add site</strong>, create two entries (two subdomains), without PHP, and enable <strong>Reverse Proxy</strong> on each:</p>
