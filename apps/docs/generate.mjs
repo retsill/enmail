@@ -102,7 +102,7 @@ function layout({ lang, slug, title, description, body }) {
 <body>
 <header class="top-bar">
   <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
-  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <a href="index.html" class="brand"><img src="../assets/imgs/enmail-logo.png" alt="enMail" class="brand-logo" /></a>
   <div class="top-actions">
     <div class="lang-switch">
       <a href="../es/${slug}.html" class="${lang === "es" ? "active" : ""}">ES</a>

@@ -107,17 +107,10 @@ pre code {
   font-size: 1.05rem;
   color: var(--text);
 }
-.top-bar .brand .logo-dot {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 700;
+.top-bar .brand .brand-logo {
+  height: 26px;
+  width: auto;
+  display: block;
 }
 
 .top-bar .top-actions {
@@ -425,8 +418,8 @@ footer.site-footer {
   .content {
     padding: 28px 18px 60px;
   }
-  .top-bar .brand span.brand-text {
-    display: none;
+  .top-bar .brand .brand-logo {
+    height: 20px;
   }
 }
 
