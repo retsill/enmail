@@ -35,6 +35,7 @@ import { ContactsApp } from "@/components/contacts-app";
 import { CategoryIcon } from "@/components/category-icon";
 import { useInboxSearch } from "./search-context";
 import { useInboxView } from "./view-context";
+import { useIsMobile } from "@/lib/use-is-mobile";
 
 const UNIFIED = "__unified__";
 const STARRED = "__starred__";
@@ -46,7 +47,22 @@ function escapeHtml(value: string): string {
 export default function InboxPage() {
   const { t, locale } = useLocale();
   const { search } = useInboxSearch();
-  const { columns, composeStyle, pageSize, density, enabledCategories, activeApp, sidebarCollapsed } = useInboxView();
+  const {
+    columns,
+    composeStyle,
+    pageSize,
+    density,
+    enabledCategories,
+    activeApp,
+    sidebarCollapsed,
+    toggleSidebar,
+    closeSidebar,
+  } = useInboxView();
+  const isMobile = useIsMobile();
+  // En el celular, 2/3/4 columnas lado a lado no entran — siempre se
+  // comporta como "lista o lectura, una a la vez" (igual que Gmail mobile),
+  // sin pisar la preferencia de columnas que el usuario eligió para desktop.
+  const effectiveColumns = isMobile ? 2 : columns;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   // Conteo por categoría de TODA la carpeta/bandeja (lo calcula el
@@ -833,7 +849,19 @@ export default function InboxPage() {
       ) : (
         <>
       {!sidebarCollapsed ? (
-      <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto bg-background px-3 py-4">
+      <>
+      {/* En mobile el sidebar flota encima del contenido (con este fondo
+          para cerrarlo tocando afuera) en vez de empujarlo, como cualquier
+          menú hamburguesa de app — en desktop este div no se ve (hidden). */}
+      <div className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={toggleSidebar} />
+      <aside
+        onClick={(e) => {
+          // Elegir algo en el drawer (redactar, una cuenta, una carpeta) lo
+          // cierra en mobile — en desktop no hace nada (ya está fijo).
+          if (isMobile && (e.target as HTMLElement).closest("button")) closeSidebar();
+        }}
+        className="fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col gap-3 overflow-y-auto bg-background px-3 py-4 shadow-2xl md:static md:z-auto md:shadow-none"
+      >
         <button
           onClick={() => {
             if (currentComposeAccountId) openComposeWindow(currentComposeAccountId);
@@ -1022,6 +1050,7 @@ export default function InboxPage() {
           {t("sidebar.addAccount")}
         </button>
       </aside>
+      </>
       ) : null}
 
       <main className="flex min-w-0 flex-1 flex-col bg-surface">
@@ -1049,7 +1078,7 @@ export default function InboxPage() {
             </div>
           ) : (
             <>
-              {columns === 3 || columns === 4 || !selectedMessage ? (
+              {effectiveColumns === 3 || effectiveColumns === 4 || !selectedMessage ? (
                 <>
               <div className="flex items-center gap-2 border-b border-border px-4 py-1.5">
                 <SelectAllMenu
@@ -1211,15 +1240,15 @@ export default function InboxPage() {
                 </>
               ) : null}
 
-              <div className={columns === 4 ? "flex min-h-0 flex-1 flex-col" : "flex min-h-0 flex-1"}>
-                {columns === 3 || columns === 4 || !selectedMessage ? (
+              <div className={effectiveColumns === 4 ? "flex min-h-0 flex-1 flex-col" : "flex min-h-0 flex-1"}>
+                {effectiveColumns === 3 || effectiveColumns === 4 || !selectedMessage ? (
                   <>
                   <div
-                    className={`flex min-h-0 min-w-0 flex-col ${columns === 3 || columns === 4 ? "shrink-0" : "flex-1"}`}
+                    className={`flex min-h-0 min-w-0 flex-col ${effectiveColumns === 3 || effectiveColumns === 4 ? "shrink-0" : "flex-1"}`}
                     style={
-                      columns === 3
+                      effectiveColumns === 3
                         ? { width: listColumnWidth }
-                        : columns === 4
+                        : effectiveColumns === 4
                           ? { height: listRowHeight }
                           : undefined
                     }
@@ -1244,7 +1273,7 @@ export default function InboxPage() {
                           )
                         }
                         onClick={() => openMessage(message, msgAccountId, msgFolderId)}
-                        className={`group flex w-full items-center gap-3 border-b border-border px-3 ${rowPadding} text-left text-sm hover:z-10 hover:shadow-md ${
+                        className={`group flex w-full items-center gap-2 border-b border-border px-2 sm:gap-3 sm:px-3 ${rowPadding} text-left text-sm hover:z-10 hover:shadow-md ${
                           selectedIds.has(message.id) ? "bg-accent-soft" : ""
                         }`}
                       >
@@ -1280,7 +1309,10 @@ export default function InboxPage() {
                             {message.mailAccount.label}
                           </span>
                         ) : null}
-                        <span className="flex w-40 shrink-0 items-center gap-1.5 truncate">
+                        {/* Angosto en mobile (no entran 160px de remitente +
+                            asunto en una pantalla de teléfono) — se ensancha
+                            de vuelta a partir de sm. */}
+                        <span className="flex w-20 shrink-0 items-center gap-1.5 truncate sm:w-40">
                           <span
                             className={`truncate ${!message.isRead ? "font-semibold" : "text-muted-foreground"}`}
                           >
@@ -1352,7 +1384,7 @@ export default function InboxPage() {
                 )}
               </div>
             </div>
-            {columns === 3 ? (
+            {effectiveColumns === 3 ? (
               <div
                 onMouseDown={startColumnResize}
                 title={t("list.resizeColumn")}
@@ -1360,7 +1392,7 @@ export default function InboxPage() {
                   resizingColumn ? "bg-accent" : ""
                 }`}
               />
-            ) : columns === 4 ? (
+            ) : effectiveColumns === 4 ? (
               <div
                 onMouseDown={startRowResize}
                 title={t("list.resizeRow")}
@@ -1373,17 +1405,21 @@ export default function InboxPage() {
           ) : null}
 
           {showCompose && composeStyle === "FULLSCREEN" ? null : selectedMessage ? (
-            <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-6">
-              <div className="mb-4 flex items-center gap-1">
+            <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-3 sm:p-6">
+              {/* overflow-x-auto: red de seguridad para que en un teléfono
+                  angosto (320-360px) esta fila de 7 acciones nunca se corte
+                  ni desborde la pantalla — se puede deslizar en vez de romper
+                  el layout. */}
+              <div className="mb-4 flex items-center gap-0.5 overflow-x-auto sm:gap-1">
                 <button
                   onClick={() => setSelectedMessage(null)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-hover"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-hover"
                 >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="m15 18-6-6 6-6" />
                   </svg>
                 </button>
-                <div className="flex-1" />
+                <div className="flex-1 shrink-0" />
                 <ToolbarIconButton title={t("reader.reply")} onClick={() => openReply(selectedMessage, false)}>
                   <path d="M9 17H4v-5l9-9 5 5-9 9Z" />
                 </ToolbarIconButton>
@@ -1519,7 +1555,7 @@ export default function InboxPage() {
                 </div>
               ) : null}
             </div>
-          ) : columns === 3 || columns === 4 ? (
+          ) : effectiveColumns === 3 || effectiveColumns === 4 ? (
             <div className="flex-1" />
           ) : null}
               </div>
@@ -1640,7 +1676,7 @@ function ToolbarIconButton({
     <button
       onClick={onClick}
       title={title}
-      className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-surface-hover"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-surface-hover sm:h-9 sm:w-9"
     >
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         {children}

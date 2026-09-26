@@ -215,13 +215,16 @@ export function ComposeDialog({
       ? "flex w-full flex-col"
       : isMaximized
         ? "modal-backdrop fixed inset-0 z-30 flex items-center justify-center bg-black/30 p-4 sm:p-8"
-        // Separado del borde/footer (no pegado abajo) para que se vea
-        // flotando, como en Gmail — por eso las 4 esquinas van redondeadas.
-        // pointer-events-none: esta franja es fixed inset-x-0 (todo el
-        // ancho de la pantalla) para poder alinear el panel a la derecha,
-        // pero sin esto bloqueaba los clics en el sidebar/lista de correo
-        // que quedan detrás, aunque ahí no se viera nada del panel.
-        : "modal-backdrop pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-end px-4 pb-6 sm:px-8";
+        : isMinimized
+          // Minimizada: la barrita angosta, igual en mobile y desktop — no
+          // necesita ocupar toda la pantalla como la ventana abierta.
+          ? "modal-backdrop pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-end px-4 pb-6 sm:px-8"
+          // En mobile, redactar ocupa toda la pantalla (como Gmail) en vez
+          // del popup flotante de 640px que no entra en un teléfono — por
+          // eso el wrapper pasa a pointer-events-auto y cubre todo (inset-0)
+          // solo hasta el breakpoint sm, donde vuelve al dock flotante de
+          // siempre anclado abajo a la derecha.
+          : "modal-backdrop fixed inset-0 z-30 flex justify-end pointer-events-auto sm:pointer-events-none sm:inset-x-0 sm:inset-y-auto sm:bottom-0 sm:px-4 sm:pb-6 lg:px-8";
 
   const panelClass = isInline
     ? "flex h-full w-full flex-col"
@@ -233,7 +236,7 @@ export function ComposeDialog({
           // Minimizada: solo la barra de título, sin el alto fijo de la
           // ventana completa — así varias minimizadas ocupan poco espacio.
           ? "pointer-events-auto flex w-72 flex-col rounded-t-xl border border-border bg-surface shadow-2xl"
-          : "pointer-events-auto flex h-[70vh] max-h-[85vh] w-[640px] flex-col rounded-xl border border-border bg-surface shadow-2xl";
+          : "pointer-events-auto flex h-full w-full flex-col rounded-none border-0 bg-surface shadow-2xl sm:h-[70vh] sm:max-h-[85vh] sm:w-[640px] sm:rounded-xl sm:border sm:border-border";
 
   return (
     <div

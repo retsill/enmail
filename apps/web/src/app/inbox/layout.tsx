@@ -176,29 +176,33 @@ function InboxHeader({
   const displayUser = authUser ?? user;
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border bg-surface px-3">
-      <div className="flex shrink-0 items-center gap-3">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border bg-surface px-2 sm:h-16 sm:gap-4 sm:px-3">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-3">
         <button
           onClick={toggleSidebar}
           title={t("sidebar.toggle")}
-          className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-surface-hover"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-surface-hover"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
           </svg>
         </button>
-        <Link href="/inbox" className="flex items-center gap-2">
+        {/* En mobile el logo se saca para dejarle todo el ancho a la
+            búsqueda, como hace Gmail — el hamburger ya identifica la app. */}
+        <Link href="/inbox" className="hidden items-center gap-2 sm:flex">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={logoUrl} alt={settings.siteName} className="h-7 w-auto" />
         </Link>
       </div>
 
-      <div className="flex-1">
+      <div className="min-w-0 flex-1">
         <SearchBar />
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
-        <LocaleSwitcher />
+      <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+        <span className="hidden sm:contents">
+          <LocaleSwitcher />
+        </span>
         <ThemeToggle />
         <IconButton onClick={onOpenQuickSettings} title={t("topbar.settings")}>
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

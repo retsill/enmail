@@ -40,6 +40,7 @@ interface InboxViewValue {
   setActiveApp: (app: InboxApp) => void;
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
+  closeSidebar: () => void;
   authUser: AuthUser | null;
   refreshAuthUser: () => void;
 }
@@ -143,6 +144,12 @@ export function InboxViewProvider({ children }: { children: React.ReactNode }) {
     setSidebarCollapsed((prev) => !prev);
   }
 
+  // En mobile el sidebar es un drawer que hay que poder cerrar al elegir
+  // algo — a diferencia de toggleSidebar, esto nunca lo vuelve a abrir.
+  function closeSidebar() {
+    setSidebarCollapsed(true);
+  }
+
   const value = useMemo(
     () => ({
       columns,
@@ -166,6 +173,7 @@ export function InboxViewProvider({ children }: { children: React.ReactNode }) {
       setActiveApp,
       sidebarCollapsed,
       toggleSidebar,
+      closeSidebar,
       authUser,
       refreshAuthUser,
     }),
