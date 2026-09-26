@@ -105,6 +105,9 @@
         <p>Activá el conector y guardá. Tus usuarios ya van a ver el botón correspondiente al agregar una cuenta.</p>
 
         <div class="callout callout-warning"><span class="callout-title">El Redirect URI tiene que ser idéntico</span><p>Google y Microsoft comparan la URL de redirect carácter por carácter (incluyendo <code>https://</code> vs <code>http://</code>, con o sin barra final). Si no coincide exactamente con lo que cargaste en enMail, el login va a fallar con un error de "redirect_uri_mismatch".</p></div>
+
+        <h2>Se conectó pero no trae carpetas ni correos</h2>
+        <p>Si en los logs del servidor (<code>docker compose logs api</code>) aparece un error <code>AUTHENTICATIONFAILED</code> con <code>oauthError: { status: 'invalid_request' }</code>, casi siempre es que la cuenta de Gmail con la que probaste <strong>no está en la lista de "Test users"</strong> del OAuth consent screen — mientras la app no pase la verificación de Google, el scope <code>https://mail.google.com/</code> (uno de los "restricted scopes") solo funciona para las cuentas explícitamente agregadas ahí. Sumala en <strong>OAuth consent screen → Test users</strong> y volvé a conectar la cuenta.</p>
       
     <div class="page-nav">
     <a href="configuration.html"><span class="dir">← Anterior</span>Variables de entorno</a>

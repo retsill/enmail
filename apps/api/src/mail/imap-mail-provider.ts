@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { ImapFlow, type ListResponse } from 'imapflow';
 import { createTransport, type Transporter } from 'nodemailer';
 import { simpleParser } from 'mailparser';
@@ -16,6 +17,7 @@ import type {
 // un singleton de Nest, se crea por request/uso (ver MailSyncService).
 export class ImapMailProvider implements MailProviderAdapter {
   readonly providerSlug = 'imap' as const;
+  private readonly logger = new Logger(ImapMailProvider.name);
 
   private client?: ImapFlow;
   private transporter?: Transporter;
@@ -43,6 +45,14 @@ export class ImapMailProvider implements MailProviderAdapter {
         ? { user: credentials.username!, accessToken: credentials.accessToken }
         : { user: credentials.username!, pass: credentials.password! },
       logger: false,
+    });
+
+    // ImapFlow es un EventEmitter y puede emitir 'error' después de conectar
+    // (ej. timeout de socket a mitad de una operación) — sin un listener acá,
+    // Node lo re-lanza como excepción no capturada y TUMBA TODO EL PROCESO
+    // de la API para todos los usuarios, no solo el de esta conexión.
+    this.client.on('error', (err) => {
+      this.logger.warn(`Error de conexión IMAP (${credentials.host}): ${String(err)}`);
     });
 
     await this.client.connect();

@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadGatewayException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { MailAccountsService } from '../mail-accounts/mail-accounts.service.js';
@@ -31,12 +31,33 @@ export class MailSyncService {
     private readonly contacts: ContactsService,
   ) {}
 
+  // Sin esto, cualquier falla al conectar (credenciales OAuth con el scope
+  // mal otorgado, host caído, etc.) subía sin capturar hasta el controller y
+  // Nest la devolvía como un 500 "Internal server error" genérico — nada
+  // que el usuario o el admin pudieran usar para entender qué pasó.
+  private async connectProvider(provider: ImapMailProvider, credentials: Parameters<ImapMailProvider['connect']>[0]) {
+    try {
+      await provider.connect(credentials);
+    } catch (error) {
+      const err = error as { authenticationFailed?: boolean; oauthError?: { status?: string }; code?: string };
+      if (err.authenticationFailed) {
+        const reason = err.oauthError?.status
+          ? ` (${err.oauthError.status} — revisá que la cuenta esté autorizada/en la lista de test users del conector)`
+          : '';
+        throw new BadGatewayException(`No se pudo autenticar contra ${credentials.host}${reason}`);
+      }
+      throw new BadGatewayException(
+        `No se pudo conectar a ${credentials.host} (${err.code ?? 'error desconocido'})`,
+      );
+    }
+  }
+
   private async buildProvider(userId: string, mailAccountId: string) {
     const account = await this.mailAccounts.getWithCredentials(userId, mailAccountId);
     const provider = new ImapMailProvider();
 
     if (account.provider === 'IMAP') {
-      await provider.connect({
+      await this.connectProvider(provider, {
         host: account.imapHost!,
         port: account.imapPort!,
         tls: account.imapTls,
@@ -75,7 +96,7 @@ export class MailSyncService {
         );
       }
 
-      await provider.connect({
+      await this.connectProvider(provider, {
         host: oauthConfig.imapHost,
         port: oauthConfig.imapPort,
         tls: oauthConfig.imapTls,

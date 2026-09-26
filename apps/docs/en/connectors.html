@@ -105,6 +105,9 @@
         <p>Enable the connector and save. Your users will now see the corresponding button when adding an account.</p>
 
         <div class="callout callout-warning"><span class="callout-title">The Redirect URI must match exactly</span><p>Google and Microsoft compare the redirect URL character by character (including <code>https://</code> vs <code>http://</code>, with or without a trailing slash). If it doesn't exactly match what you entered in enMail, login will fail with a &quot;redirect_uri_mismatch&quot; error.</p></div>
+
+        <h2>It connected but didn't bring in any folders or mail</h2>
+        <p>If the server logs (<code>docker compose logs api</code>) show an <code>AUTHENTICATIONFAILED</code> error with <code>oauthError: { status: 'invalid_request' }</code>, it's almost always that the Gmail account you tested with <strong>isn't in the OAuth consent screen's "Test users" list</strong> — until the app passes Google's verification, the <code>https://mail.google.com/</code> scope (one of the "restricted scopes") only works for accounts explicitly added there. Add it under <strong>OAuth consent screen → Test users</strong> and reconnect the account.</p>
       
     <div class="page-nav">
     <a href="configuration.html"><span class="dir">← Previous</span>Environment variables</a>

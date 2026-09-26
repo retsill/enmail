@@ -1006,6 +1006,9 @@ npm run build</code></pre>
           "<p>Google y Microsoft comparan la URL de redirect carácter por carácter (incluyendo <code>https://</code> vs <code>http://</code>, con o sin barra final). Si no coincide exactamente con lo que cargaste en enMail, el login va a fallar con un error de \"redirect_uri_mismatch\".</p>",
           "",
         ).es}
+
+        <h2>Se conectó pero no trae carpetas ni correos</h2>
+        <p>Si en los logs del servidor (<code>docker compose logs api</code>) aparece un error <code>AUTHENTICATIONFAILED</code> con <code>oauthError: { status: 'invalid_request' }</code>, casi siempre es que la cuenta de Gmail con la que probaste <strong>no está en la lista de "Test users"</strong> del OAuth consent screen — mientras la app no pase la verificación de Google, el scope <code>https://mail.google.com/</code> (uno de los "restricted scopes") solo funciona para las cuentas explícitamente agregadas ahí. Sumala en <strong>OAuth consent screen → Test users</strong> y volvé a conectar la cuenta.</p>
       `,
       en: `
         <h1>Gmail/Outlook connectors</h1>
@@ -1077,6 +1080,9 @@ npm run build</code></pre>
           "",
           "<p>Google and Microsoft compare the redirect URL character by character (including <code>https://</code> vs <code>http://</code>, with or without a trailing slash). If it doesn't exactly match what you entered in enMail, login will fail with a &quot;redirect_uri_mismatch&quot; error.</p>",
         ).en}
+
+        <h2>It connected but didn't bring in any folders or mail</h2>
+        <p>If the server logs (<code>docker compose logs api</code>) show an <code>AUTHENTICATIONFAILED</code> error with <code>oauthError: { status: 'invalid_request' }</code>, it's almost always that the Gmail account you tested with <strong>isn't in the OAuth consent screen's "Test users" list</strong> — until the app passes Google's verification, the <code>https://mail.google.com/</code> scope (one of the "restricted scopes") only works for accounts explicitly added there. Add it under <strong>OAuth consent screen → Test users</strong> and reconnect the account.</p>
       `,
     },
   },
