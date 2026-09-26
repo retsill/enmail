@@ -8,8 +8,11 @@ const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
 
 // Marca por defecto (apps/web/public/) — se ve así en cualquier instalación
 // nueva hasta que el admin suba la suya propia desde Ajustes > Marca.
-export const DEFAULT_LOGO_LIGHT = "/enmail-logo.png";
-export const DEFAULT_LOGO_DARK = "/enmail-logo-dark.png";
+// Los nombres de archivo quedaron al revés de lo que sugieren: "-dark.png"
+// es la versión que se ve bien en fondo CLARO, y el que no dice "-dark" es
+// el que se ve bien en fondo OSCURO.
+export const DEFAULT_LOGO_LIGHT = "/enmail-logo-dark.png";
+export const DEFAULT_LOGO_DARK = "/enmail-logo.png";
 export const DEFAULT_FAVICON = "/favicon.png";
 
 export interface SystemSettings {

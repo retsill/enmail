@@ -100,6 +100,7 @@ docker compose up -d --build</code></pre>
           <tr><td><code>mail.tudominio.com</code></td><td><code>http://127.0.0.1:3000</code> (contenedor <code>web</code>)</td></tr>
           <tr><td><code>mail-api.tudominio.com</code></td><td><code>http://127.0.0.1:3001</code> (contenedor <code>api</code>)</td></tr>
         </table>
+        <div class="callout callout-warning"><span class="callout-title">Proxeá el dominio completo, no solo /api</span><p>Si aaPanel te pide un "directorio" para el reverse proxy, dejalo en <code>/</code> (la raíz), <strong>no</strong> en <code>/api</code>. La API sirve tanto <code>/api/*</code> como <code>/uploads/*</code> (logos, avatares, adjuntos) — si el proxy solo cubre <code>/api</code>, esas imágenes suben bien pero después nunca cargan (404), porque nginx nunca les llega a mandar esa parte al contenedor.</p></div>
         <p>Recordá que <code>NEXT_PUBLIC_API_URL</code> en tu <code>.env</code> debe apuntar a <code>https://mail-api.tudominio.com/api</code> <em>antes</em> de correr <code>docker compose up -d --build</code> (esta variable queda "horneada" en el build de la web).</p>
 
         <h3>5. SSL</h3>

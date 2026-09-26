@@ -490,6 +490,13 @@ docker compose up -d --build</code></pre>
           <tr><td><code>mail.tudominio.com</code></td><td><code>http://127.0.0.1:3000</code> (contenedor <code>web</code>)</td></tr>
           <tr><td><code>mail-api.tudominio.com</code></td><td><code>http://127.0.0.1:3001</code> (contenedor <code>api</code>)</td></tr>
         </table>
+        ${callout(
+          "warning",
+          "Proxeá el dominio completo, no solo /api",
+          "",
+          `<p>Si aaPanel te pide un "directorio" para el reverse proxy, dejalo en <code>/</code> (la raíz), <strong>no</strong> en <code>/api</code>. La API sirve tanto <code>/api/*</code> como <code>/uploads/*</code> (logos, avatares, adjuntos) — si el proxy solo cubre <code>/api</code>, esas imágenes suben bien pero después nunca cargan (404), porque nginx nunca les llega a mandar esa parte al contenedor.</p>`,
+          "",
+        ).es}
         <p>Recordá que <code>NEXT_PUBLIC_API_URL</code> en tu <code>.env</code> debe apuntar a <code>https://mail-api.tudominio.com/api</code> <em>antes</em> de correr <code>docker compose up -d --build</code> (esta variable queda "horneada" en el build de la web).</p>
 
         <h3>5. SSL</h3>
@@ -564,6 +571,13 @@ docker compose up -d --build</code></pre>
           <tr><td><code>mail.yourdomain.com</code></td><td><code>http://127.0.0.1:3000</code> (the <code>web</code> container)</td></tr>
           <tr><td><code>mail-api.yourdomain.com</code></td><td><code>http://127.0.0.1:3001</code> (the <code>api</code> container)</td></tr>
         </table>
+        ${callout(
+          "warning",
+          "",
+          "Proxy the whole domain, not just /api",
+          "",
+          `<p>If aaPanel asks for a "directory" for the reverse proxy, leave it as <code>/</code> (root), <strong>not</strong> <code>/api</code>. The API serves both <code>/api/*</code> and <code>/uploads/*</code> (logos, avatars, attachments) — if the proxy only covers <code>/api</code>, those images upload fine but then never load (404), because nginx never forwards that part to the container.</p>`,
+        ).en}
         <p>Remember that <code>NEXT_PUBLIC_API_URL</code> in your <code>.env</code> must point to <code>https://mail-api.yourdomain.com/api</code> <em>before</em> running <code>docker compose up -d --build</code> (this variable gets "baked in" during the web build).</p>
 
         <h3>5. SSL</h3>
