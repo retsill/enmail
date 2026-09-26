@@ -11,6 +11,7 @@ import { AddonsModule } from './addons/addons.module.js';
 import { SettingsModule } from './settings/settings.module.js';
 import { OAuthModule } from './integrations/oauth.module.js';
 import { ContactsModule } from './contacts/contacts.module.js';
+import { SetupModule } from './setup/setup.module.js';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ContactsModule } from './contacts/contacts.module.js';
     SettingsModule,
     OAuthModule,
     ContactsModule,
+    SetupModule,
   ],
   controllers: [AppController],
   providers: [AppService],

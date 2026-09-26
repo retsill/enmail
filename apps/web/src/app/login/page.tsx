@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { setSession } from "@/lib/auth";
@@ -23,6 +23,22 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [checkingSetup, setCheckingSetup] = useState(true);
+
+  // Instalación recién levantada (todavía sin ningún admin): manda al
+  // wizard de /setup en vez de mostrar un login que nadie puede pasar.
+  useEffect(() => {
+    api.setup
+      .status()
+      .then((res) => {
+        if (res.needsSetup) {
+          router.replace("/setup");
+          return;
+        }
+        setCheckingSetup(false);
+      })
+      .catch(() => setCheckingSetup(false));
+  }, [router]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -38,6 +54,8 @@ export default function LoginPage() {
       setLoading(false);
     }
   }
+
+  if (checkingSetup) return null;
 
   return (
     <div className="flex min-h-screen w-full flex-col">

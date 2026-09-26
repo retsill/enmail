@@ -1,9 +1,11 @@
 import 'dotenv/config';
 import { PrismaClient } from '../src/generated/prisma/client.js';
-import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// El admin ya NO se siembra con credenciales fijas acá — lo crea el wizard
+// de instalación (GET/POST /setup) la primera vez que se abre la app, con
+// el email/contraseña reales que elija quien instala.
 async function main() {
   const addons = [
     { slug: 'gmail', name: 'Gmail', description: 'Conecta cuentas de Gmail vía OAuth2 (IMAP/SMTP con XOAUTH2)' },
@@ -18,24 +20,6 @@ async function main() {
       create: addon,
       update: { name: addon.name, description: addon.description },
     });
-  }
-
-  const adminEmail = process.env.SEED_ADMIN_EMAIL ?? 'admin@webmail.local';
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? 'admin12345';
-
-  const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
-  if (!existingAdmin) {
-    await prisma.user.create({
-      data: {
-        name: 'Administrador',
-        email: adminEmail,
-        passwordHash: await bcrypt.hash(adminPassword, 12),
-        role: 'ADMIN',
-      },
-    });
-    console.log(`Admin creado: ${adminEmail} / ${adminPassword}`);
-  } else {
-    console.log(`Admin ya existe: ${adminEmail}`);
   }
 
   await prisma.systemSettings.upsert({

@@ -86,7 +86,9 @@ export class AuthService {
     }
   }
 
-  private async issueToken(user: {
+  // Público: el wizard de instalación (SetupService) también necesita loguear
+  // al admin recién creado de una, sin pedirle que inicie sesión aparte.
+  async issueToken(user: {
     id: string;
     name: string;
     email: string;

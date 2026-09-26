@@ -72,6 +72,22 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
 
+  setup: {
+    status: () => request<{ needsSetup: boolean }>("/setup/status"),
+    complete: (input: {
+      adminName: string;
+      adminEmail: string;
+      adminPassword: string;
+      siteName?: string;
+      imapHost: string;
+      imapPort: number;
+      imapTls: boolean;
+      smtpHost: string;
+      smtpPort: number;
+      smtpTls: boolean;
+    }) => request<LoginResponse>("/setup", { method: "POST", body: JSON.stringify(input) }),
+  },
+
   me: {
     getPreferences: () => request<UserPreferences>("/me/preferences"),
     updatePreferences: (input: Partial<UserPreferences>) =>
@@ -264,7 +280,23 @@ export const api = {
       request<SitePage>(`/settings/pages/${id}`, { method: "PATCH", body: JSON.stringify(input) }),
     deletePage: (id: string) => request<{ ok: true }>(`/settings/pages/${id}`, { method: "DELETE" }),
   },
+
+  users: {
+    list: () => request<AppUser[]>("/users"),
+    setRole: (id: string, role: "ADMIN" | "USER") =>
+      request<AppUser>(`/users/${id}/role`, { method: "PATCH", body: JSON.stringify({ role }) }),
+  },
 };
+
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "ADMIN" | "USER";
+  authSource: "LOCAL" | "MAIL_SERVER";
+  isActive: boolean;
+  createdAt: string;
+}
 
 export interface SitePage {
   id: string;

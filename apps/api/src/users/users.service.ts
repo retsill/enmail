@@ -1,4 +1,11 @@
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
@@ -18,8 +25,27 @@ export class UsersService {
 
   list() {
     return this.prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true, isActive: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, authSource: true, isActive: true, createdAt: true },
       orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  // Cualquier casilla que inició sesión directo contra el servidor de correo
+  // (authSource MAIL_SERVER) arranca como USER — esto es lo único que la
+  // puede convertir en admin del webmail después. No se deja auto-degradar
+  // al admin que hace el cambio, para no dejar la cuenta sin ningún admin.
+  async setRole(actingUserId: string, targetUserId: string, role: UserRole) {
+    if (actingUserId === targetUserId) {
+      throw new ForbiddenException('No podés cambiar tu propio rol');
+    }
+    const target = await this.prisma.user.findUnique({ where: { id: targetUserId } });
+    if (!target) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    return this.prisma.user.update({
+      where: { id: targetUserId },
+      data: { role },
+      select: { id: true, name: true, email: true, role: true, authSource: true, isActive: true, createdAt: true },
     });
   }
 

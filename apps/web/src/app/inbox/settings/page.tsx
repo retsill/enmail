@@ -8,6 +8,7 @@ import {
   ApiError,
   API_URL,
   type AddonConfig,
+  type AppUser,
   type MailServerSettingsDto,
   type SitePage,
   type UserProfile,
@@ -21,7 +22,7 @@ import { resolveAssetUrl, useRefreshSystemSettings } from "@/lib/settings-contex
 import { useInboxView } from "../view-context";
 import { ThemesSection, SettingsCard } from "@/components/themes-section";
 
-type Tab = "profile" | "themes" | "branding" | "pages" | "mailServer" | "integrations";
+type Tab = "profile" | "themes" | "branding" | "pages" | "users" | "mailServer" | "integrations";
 
 function TabIcon({ tab }: { tab: Tab }) {
   const common = { width: 17, height: 17, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 };
@@ -65,6 +66,15 @@ function TabIcon({ tab }: { tab: Tab }) {
         <path d="M14 2v5h5M8 13h8M8 17h5" />
       </svg>
     );
+  if (tab === "users")
+    return (
+      <svg {...common}>
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 19c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
+        <circle cx="17.5" cy="7.5" r="2.5" />
+        <path d="M15 12.2c2.6.5 4.5 2.4 4.5 4.8" />
+      </svg>
+    );
   return (
     <svg {...common}>
       <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z" />
@@ -100,6 +110,7 @@ export default function SystemSettingsPage() {
       ? [
           { id: "branding" as const, label: t("settings.branding") },
           { id: "pages" as const, label: t("settings.pages") },
+          { id: "users" as const, label: t("settings.users") },
           { id: "mailServer" as const, label: t("settings.mailServer") },
           { id: "integrations" as const, label: t("settings.integrations") },
         ]
@@ -142,6 +153,7 @@ export default function SystemSettingsPage() {
             {tab === "themes" ? <ThemesSection /> : null}
             {tab === "branding" && isAdmin ? <BrandingSection /> : null}
             {tab === "pages" && isAdmin ? <PagesSection /> : null}
+            {tab === "users" && isAdmin ? <UsersSection /> : null}
             {tab === "mailServer" && isAdmin ? <MailServerSection /> : null}
             {tab === "integrations" && isAdmin ? <IntegrationsSection /> : null}
           </div>
@@ -947,6 +959,89 @@ function PagesSection() {
           onConfirm={() => handleDelete(confirmDeleteId)}
           onCancel={() => setConfirmDeleteId(null)}
         />
+      ) : null}
+    </section>
+  );
+}
+
+// Convertir una casilla real (authSource MAIL_SERVER, se logueó sola contra
+// el servidor de correo) en administrador del webmail — antes esto no se
+// podía hacer desde ningún lado, había que editar la base de datos a mano.
+function UsersSection() {
+  const { t } = useLocale();
+  const currentUser = getStoredUser();
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  function load() {
+    api.users
+      .list()
+      .then(setUsers)
+      .catch(() => setError(t("login.error.generic")))
+      .finally(() => setLoading(false));
+  }
+
+  useEffect(load, []);
+
+  async function toggleRole(target: AppUser) {
+    const nextRole = target.role === "ADMIN" ? "USER" : "ADMIN";
+    setUpdatingId(target.id);
+    setError(null);
+    try {
+      const updated = await api.users.setRole(target.id, nextRole);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : t("login.error.generic"));
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  return (
+    <section>
+      <h2 className="mb-1 text-lg font-medium">{t("settings.users")}</h2>
+      <p className="mb-6 text-sm text-muted-foreground">{t("settings.users.description")}</p>
+
+      {error ? <p className="mb-4 text-sm text-danger">{error}</p> : null}
+
+      {!loading ? (
+        <ul className="flex flex-col divide-y divide-border rounded-xl border border-border">
+          {users.map((u) => (
+            <li key={u.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+              <div className="min-w-0">
+                <p className="truncate font-medium">
+                  {u.name} {u.id === currentUser?.id ? <span className="text-xs text-muted-foreground">({t("settings.users.you")})</span> : null}
+                </p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {u.email} · {u.authSource === "MAIL_SERVER" ? t("settings.users.mailAccount") : t("settings.users.localAccount")}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                    u.role === "ADMIN" ? "bg-accent-soft text-accent" : "bg-surface-muted text-muted-foreground"
+                  }`}
+                >
+                  {u.role === "ADMIN" ? t("settings.users.admin") : t("settings.users.user")}
+                </span>
+                <button
+                  type="button"
+                  disabled={u.id === currentUser?.id || updatingId === u.id}
+                  onClick={() => toggleRole(u)}
+                  className="rounded-full border border-border px-3 py-1 text-xs hover:bg-surface-muted disabled:opacity-50"
+                >
+                  {updatingId === u.id
+                    ? "…"
+                    : u.role === "ADMIN"
+                      ? t("settings.users.demote")
+                      : t("settings.users.promote")}
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
       ) : null}
     </section>
   );
