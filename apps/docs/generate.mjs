@@ -34,6 +34,7 @@ const NAV = [
     section: { es: "Referencia", en: "Reference" },
     items: [
       { slug: "configuration", es: "Variables de entorno", en: "Environment variables" },
+      { slug: "connectors", es: "Conectores Gmail/Outlook", en: "Gmail/Outlook connectors" },
       { slug: "faq", es: "Preguntas frecuentes", en: "FAQ" },
     ],
   },

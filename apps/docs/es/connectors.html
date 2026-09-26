@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Conectores Gmail/Outlook — enMail Docs</title>
+<meta name="description" content="Cómo crear las apps OAuth de Google y Microsoft para conectar Gmail/Outlook." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><img src="../assets/imgs/enmail-logo.png" alt="enMail" class="brand-logo" /></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/connectors.html" class="active">ES</a>
+      <a href="../en/connectors.html" class="">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Empezar</h4>
+      <nav>
+        <a href="index.html" class="">Introducción</a>
+      </nav>
+
+      <h4>Instalación</h4>
+      <nav>
+        <a href="docker.html" class="">Con Docker (recomendado)</a>
+<a href="manual.html" class="">Instalación manual</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Referencia</h4>
+      <nav>
+        <a href="configuration.html" class="">Variables de entorno</a>
+<a href="connectors.html" class="active">Conectores Gmail/Outlook</a>
+<a href="faq.html" class="">Preguntas frecuentes</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>Conectores Gmail/Outlook</h1>
+        <p class="lede">Con esto, tus usuarios pueden agregar una cuenta de Gmail u Outlook con el botón "Conectar con Google/Microsoft" (sin contraseña de aplicación) en vez de configurar IMAP/SMTP a mano. Hace falta que <strong>vos, como admin</strong>, crees una app OAuth en cada proveedor una sola vez y cargues sus datos en <strong>Ajustes → Conectores externos</strong>.</p>
+
+        <div class="callout callout-tip"><span class="callout-title">¿Es obligatorio?</span><p>No. Si no configurás esto, enMail funciona igual — tus usuarios simplemente no van a ver el botón de Gmail/Outlook al agregar una cuenta, pero sí pueden seguir agregando cualquier cuenta IMAP/SMTP a mano (incluido Gmail/Outlook, generando una "contraseña de aplicación" del lado de ellos).</p></div>
+
+        <h2>Gmail (Google Cloud Console)</h2>
+        <ol>
+          <li>Entrá a <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a> y creá un proyecto nuevo (o usá uno existente).</li>
+          <li><strong>APIs & Services → Library</strong> → buscá <strong>Gmail API</strong> → <strong>Enable</strong>.</li>
+          <li><strong>APIs & Services → OAuth consent screen</strong>:
+            <ul>
+              <li>Tipo: <strong>External</strong> (a menos que uses Google Workspace y quieras limitarlo a tu organización, ahí elegís <strong>Internal</strong>).</li>
+              <li>Completá nombre de la app, email de soporte y de contacto.</li>
+              <li>En <strong>Scopes</strong>, agregá <code>https://mail.google.com/</code> (acceso completo a IMAP/SMTP).</li>
+              <li>Si el consent screen queda en modo "Testing", agregá los emails de tus usuarios como <strong>Test users</strong> — si no, Google les va a bloquear el login. Para que cualquiera pueda conectar sin esa lista, hay que mandar la app a verificación de Google (proceso aparte, no obligatorio para uso interno).</li>
+            </ul>
+          </li>
+          <li><strong>APIs & Services → Credentials → Create Credentials → OAuth client ID</strong>:
+            <ul>
+              <li>Application type: <strong>Web application</strong>.</li>
+              <li><strong>Authorized redirect URIs</strong>, agregá exactamente:
+                <pre><code>https://mail-api.tudominio.com/api/oauth/gmail/callback</code></pre>
+                (reemplazá por el dominio real de tu API — ver <a href="docker.html">Instalación</a>).
+              </li>
+            </ul>
+          </li>
+          <li>Guardá el <strong>Client ID</strong> y <strong>Client Secret</strong> que te muestra Google.</li>
+        </ol>
+
+        <h2>Outlook / Microsoft 365 (Azure Portal)</h2>
+        <ol>
+          <li>Entrá a <a href="https://portal.azure.com/" target="_blank" rel="noopener">portal.azure.com</a> → <strong>Microsoft Entra ID</strong> → <strong>App registrations</strong> → <strong>New registration</strong>.</li>
+          <li><strong>Supported account types</strong>: elegí "Accounts in any organizational directory and personal Microsoft accounts" (para que funcione tanto con cuentas de Microsoft 365 como personales de Outlook.com).</li>
+          <li><strong>Redirect URI</strong>: tipo <strong>Web</strong>, valor exacto:
+            <pre><code>https://mail-api.tudominio.com/api/oauth/outlook/callback</code></pre>
+          </li>
+          <li>Ya creada la app, andá a <strong>API permissions → Add a permission</strong>:
+            <ul>
+              <li><strong>APIs my organization uses</strong> → buscá <strong>Office 365 Exchange Online</strong> → <strong>Delegated permissions</strong> → agregá <code>IMAP.AccessAsUser.All</code> y <code>SMTP.Send</code>.</li>
+              <li>También agregá los permisos delegados estándar <strong>Microsoft Graph</strong>: <code>openid</code>, <code>email</code>, <code>profile</code>, <code>offline_access</code>.</li>
+            </ul>
+          </li>
+          <li><strong>Certificates & secrets → New client secret</strong> → copiá el <strong>Value</strong> apenas se genera (no se vuelve a mostrar).</li>
+          <li>El <strong>Client ID</strong> (Application ID) está en la página <strong>Overview</strong> de la app.</li>
+        </ol>
+
+        <h2>Cargar los datos en enMail</h2>
+        <p>Como admin, andá a <strong>Ajustes → Conectores externos</strong>, elegí Gmail u Outlook, y completá:</p>
+        <table>
+          <tr><th>Campo</th><th>Valor</th></tr>
+          <tr><td>Client ID</td><td>El que copiaste de Google/Azure</td></tr>
+          <tr><td>Client Secret</td><td>El que copiaste de Google/Azure</td></tr>
+          <tr><td>Redirect URI</td><td>La misma URL exacta que registraste arriba</td></tr>
+        </table>
+        <p>Activá el conector y guardá. Tus usuarios ya van a ver el botón correspondiente al agregar una cuenta.</p>
+
+        <div class="callout callout-warning"><span class="callout-title">El Redirect URI tiene que ser idéntico</span><p>Google y Microsoft comparan la URL de redirect carácter por carácter (incluyendo <code>https://</code> vs <code>http://</code>, con o sin barra final). Si no coincide exactamente con lo que cargaste en enMail, el login va a fallar con un error de "redirect_uri_mismatch".</p></div>
+      
+    <div class="page-nav">
+    <a href="configuration.html"><span class="dir">← Anterior</span>Variables de entorno</a>
+    <a href="faq.html" class="next"><span class="dir">Siguiente →</span>Preguntas frecuentes</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — Licencia MIT</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>
