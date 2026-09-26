@@ -2,7 +2,10 @@
 # "context: .", "dockerfile: apps/api/Dockerfile") porque es un npm workspace:
 # el build necesita ver package.json de los tres paquetes para instalar bien.
 
-FROM node:20-alpine AS deps
+# Debian (glibc), no Alpine (musl) — igual que apps/web/Dockerfile: evita
+# problemas de binarios nativos precompilados (Prisma incluido) que en musl
+# no siempre se resuelven bien vía npm.
+FROM node:20-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
@@ -11,6 +14,9 @@ COPY packages/shared/package.json packages/shared/package.json
 RUN npm ci
 
 FROM deps AS build
+# Prisma necesita openssl para su motor de consultas — las imágenes -slim
+# de Debian no lo traen instalado por defecto.
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 COPY . .
 # src/generated/prisma no viaja en la imagen base (está en .dockerignore,
 # es un artefacto generado) — hay que generarlo de cero acá. DATABASE_URL
@@ -20,8 +26,9 @@ ENV DATABASE_URL="mysql://user:pass@localhost:3306/placeholder"
 RUN cd apps/api && npx prisma generate
 RUN npm run build --workspace api
 
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 WORKDIR /app
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/packages/shared ./packages/shared
