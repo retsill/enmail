@@ -63,6 +63,7 @@ export class MailAccountsService {
       smtpHost: string;
       smtpPort: number;
       smtpTls: boolean;
+      allowInsecureTls?: boolean;
     },
   ) {
     const existing = await this.prisma.mailAccount.findFirst({
@@ -80,6 +81,7 @@ export class MailAccountsService {
       smtpHost: server.smtpHost,
       smtpPort: server.smtpPort,
       smtpTls: server.smtpTls,
+      allowInsecureTls: server.allowInsecureTls ?? false,
       username: emailAddress,
       encryptedPassword: this.crypto.encrypt(password),
       isPrimary: true,

@@ -8,6 +8,11 @@ export interface MailProviderCredentials {
   host?: string;
   port?: number;
   tls?: boolean;
+  // Servidores de correo compartidos a veces presentan un certificado TLS
+  // mal emparejado con el hostname (frecuente en hosting compartido) — sin
+  // esto, ninguna casilla puede loguearse aunque la contraseña sea correcta.
+  // No reemplaza arreglar el certificado real del lado del servidor.
+  allowInvalidCert?: boolean;
   username?: string;
   password?: string;
   accessToken?: string;

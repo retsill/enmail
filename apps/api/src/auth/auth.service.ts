@@ -68,7 +68,7 @@ export class AuthService {
   private async verifyImapCredentials(
     email: string,
     password: string,
-    server: { imapHost: string; imapPort: number; imapTls: boolean },
+    server: { imapHost: string; imapPort: number; imapTls: boolean; allowInsecureTls?: boolean },
   ) {
     const provider = new ImapMailProvider();
     try {
@@ -76,11 +76,21 @@ export class AuthService {
         host: server.imapHost,
         port: server.imapPort,
         tls: server.imapTls,
+        allowInvalidCert: server.allowInsecureTls,
         username: email,
         password,
       });
-    } catch {
-      throw new UnauthorizedException('Credenciales inválidas');
+    } catch (error) {
+      // Sin distinguir esto, un problema de conexión/certificado (servidor
+      // caído, TLS mal configurado) se reportaba igual que una contraseña
+      // incorrecta — imposible de diagnosticar desde el mensaje de error.
+      const err = error as { authenticationFailed?: boolean; code?: string };
+      if (err.authenticationFailed) {
+        throw new UnauthorizedException('Credenciales inválidas');
+      }
+      throw new UnauthorizedException(
+        `No se pudo conectar al servidor de correo (${err.code ?? 'error desconocido'}). Avisá al administrador.`,
+      );
     } finally {
       await provider.disconnect().catch(() => undefined);
     }

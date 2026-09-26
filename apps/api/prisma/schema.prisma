@@ -127,6 +127,9 @@ model MailAccount {
   smtpHost String?
   smtpPort Int?
   smtpTls  Boolean @default(true)
+  // Copiado de MailServerSettings.allowInsecureTls al momento de crear la
+  // cuenta (login directo) — ver esa definición para el porqué.
+  allowInsecureTls Boolean @default(false)
 
   username          String? // usuario de login en el servidor de correo
   encryptedPassword String? @db.Text // password (IMAP) o refresh token (OAuth), cifrado en reposo
@@ -251,6 +254,14 @@ model MailServerSettings {
   smtpHost String
   smtpPort Int     @default(587)
   smtpTls  Boolean @default(false)
+
+  // Para servidores de correo compartidos con un certificado mal emparejado
+  // (frecuente en hosting compartido: el cert cubre el dominio pero el
+  // servicio de correo responde con SNI de otro nombre) — sin esto, ninguna
+  // casilla puede loguearse aunque la contraseña sea correcta. Deshabilita
+  // la verificación estricta del certificado TLS; no reemplaza arreglar el
+  // certificado real del lado del servidor de correo.
+  allowInsecureTls Boolean @default(false)
 
   updatedAt DateTime @updatedAt
 

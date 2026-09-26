@@ -559,6 +559,7 @@ function MailServerSection() {
     smtpHost: "",
     smtpPort: 587,
     smtpTls: false,
+    allowInsecureTls: false,
   });
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -650,6 +651,22 @@ function MailServerSection() {
               onChange={(e) => setServer({ ...server, smtpTls: e.target.checked })}
             />
             SMTP TLS
+          </label>
+        </div>
+
+        <div className="rounded-xl border border-border p-4">
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={server.allowInsecureTls ?? false}
+              onChange={(e) => setServer({ ...server, allowInsecureTls: e.target.checked })}
+            />
+            <span>
+              <span className="font-medium text-foreground">{t("settings.mailServer.allowInsecureTls")}</span>
+              <br />
+              <span className="text-xs text-muted-foreground">{t("settings.mailServer.allowInsecureTls.hint")}</span>
+            </span>
           </label>
         </div>
 

@@ -93,6 +93,7 @@ export class SettingsController {
       smtpHost: dto.smtpHost,
       smtpPort: dto.smtpPort,
       smtpTls: dto.smtpTls ?? false,
+      allowInsecureTls: dto.allowInsecureTls ?? false,
     });
   }
 

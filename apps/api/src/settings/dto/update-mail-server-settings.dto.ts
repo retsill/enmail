@@ -24,4 +24,8 @@ export class UpdateMailServerSettingsDto {
   @IsOptional()
   @IsBoolean()
   smtpTls?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  allowInsecureTls?: boolean;
 }

@@ -40,6 +40,7 @@ export class MailSyncService {
         host: account.imapHost!,
         port: account.imapPort!,
         tls: account.imapTls,
+        allowInvalidCert: account.allowInsecureTls,
         username: account.username!,
         password: account.password,
       });
@@ -48,6 +49,7 @@ export class MailSyncService {
         host: account.smtpHost!,
         port: account.smtpPort!,
         tls: account.smtpTls,
+        allowInvalidCert: account.allowInsecureTls,
         username: account.username!,
         password: account.password,
       });

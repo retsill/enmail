@@ -59,6 +59,7 @@ export class SettingsService {
     smtpHost: string;
     smtpPort: number;
     smtpTls: boolean;
+    allowInsecureTls?: boolean;
   }) {
     return this.prisma.mailServerSettings.upsert({
       where: { id: SETTINGS_ID },

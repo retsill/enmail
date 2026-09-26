@@ -202,6 +202,9 @@ export const dictionaries = {
     "settings.mailServer": "Servidor de correo",
     "settings.mailServer.description":
       "Estos datos se usan para el login directo (cPanel, Plesk, aaPanel, etc.): cualquier buzón creado ahí funciona con solo iniciar sesión.",
+    "settings.mailServer.allowInsecureTls": "Permitir certificado TLS inválido",
+    "settings.mailServer.allowInsecureTls.hint":
+      "Activalo solo si el login falla por un error de certificado (frecuente en hosting compartido) aunque la contraseña sea correcta. Esto reduce la seguridad de la conexión — lo ideal es corregir el certificado del servidor de correo en vez de dejarlo activo.",
     "settings.integrations": "Conectores externos",
     "settings.integrations.description":
       "Registra la app OAuth de cada proveedor (Google Cloud Console, Azure Portal, etc.) para que los usuarios puedan conectar cuentas Gmail/Outlook desde el webmail.",
@@ -458,6 +461,9 @@ export const dictionaries = {
     "settings.mailServer": "Mail server",
     "settings.mailServer.description":
       "Used for direct login (cPanel, Plesk, aaPanel, etc.): any mailbox created there works just by signing in.",
+    "settings.mailServer.allowInsecureTls": "Allow invalid TLS certificate",
+    "settings.mailServer.allowInsecureTls.hint":
+      "Only enable this if login fails with a certificate error (common on shared hosting) even though the password is correct. This weakens connection security — fixing the mail server's certificate is the better long-term option.",
     "settings.integrations": "External connectors",
     "settings.integrations.description":
       "Register each provider's OAuth app (Google Cloud Console, Azure Portal, etc.) so users can connect Gmail/Outlook accounts from the webmail.",

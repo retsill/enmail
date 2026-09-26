@@ -38,6 +38,7 @@ export class ImapMailProvider implements MailProviderAdapter {
       host: credentials.host!,
       port: credentials.port ?? 993,
       secure: credentials.tls ?? true,
+      tls: credentials.allowInvalidCert ? { rejectUnauthorized: false } : undefined,
       auth: credentials.accessToken
         ? { user: credentials.username!, accessToken: credentials.accessToken }
         : { user: credentials.username!, pass: credentials.password! },
@@ -337,6 +338,7 @@ export class ImapMailProvider implements MailProviderAdapter {
         host: smtp.host,
         port: smtp.port ?? 587,
         secure: smtp.tls ?? false,
+        tls: smtp.allowInvalidCert ? { rejectUnauthorized: false } : undefined,
         auth: smtp.accessToken
           ? { type: 'OAuth2', user: smtp.username, accessToken: smtp.accessToken }
           : { user: smtp.username, pass: smtp.password },

@@ -451,6 +451,7 @@ export interface MailServerSettingsDto {
   smtpHost: string;
   smtpPort: number;
   smtpTls: boolean;
+  allowInsecureTls?: boolean;
 }
 
 export type MailServerSettingsInput = MailServerSettingsDto;
