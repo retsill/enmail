@@ -6,6 +6,12 @@ import type { Locale } from "@/i18n/dictionaries";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
 
+// Marca por defecto (apps/web/public/) — se ve así en cualquier instalación
+// nueva hasta que el admin suba la suya propia desde Ajustes > Marca.
+export const DEFAULT_LOGO_LIGHT = "/enmail-logo.png";
+export const DEFAULT_LOGO_DARK = "/enmail-logo-dark.png";
+export const DEFAULT_FAVICON = "/favicon.png";
+
 export interface SystemSettings {
   siteName: string;
   logoUrl: string | null;
@@ -60,27 +66,27 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     document.title = settings.siteName;
 
-    const faviconHref = toAbsolute(settings.faviconUrl);
-    if (faviconHref) {
-      let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
-      if (!link) {
-        link = document.createElement("link");
-        link.rel = "icon";
-        document.head.appendChild(link);
-      }
-      link.href = faviconHref;
-
-      // iOS ignora los íconos del manifest para "Agregar a inicio" — se fija
-      // solo en este link, así que sin esto el favicon nunca aparecía como
-      // ícono de la PWA en iPhone/iPad aunque el manifest estuviera bien.
-      let appleIcon = document.querySelector<HTMLLinkElement>("link[rel='apple-touch-icon']");
-      if (!appleIcon) {
-        appleIcon = document.createElement("link");
-        appleIcon.rel = "apple-touch-icon";
-        document.head.appendChild(appleIcon);
-      }
-      appleIcon.href = faviconHref;
+    // Sin favicon propio subido todavía: usa el default embebido en vez de
+    // dejar el ícono genérico de Next.js puesto.
+    const faviconHref = toAbsolute(settings.faviconUrl) ?? DEFAULT_FAVICON;
+    let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
     }
+    link.href = faviconHref;
+
+    // iOS ignora los íconos del manifest para "Agregar a inicio" — se fija
+    // solo en este link, así que sin esto el favicon nunca aparecía como
+    // ícono de la PWA en iPhone/iPad aunque el manifest estuviera bien.
+    let appleIcon = document.querySelector<HTMLLinkElement>("link[rel='apple-touch-icon']");
+    if (!appleIcon) {
+      appleIcon = document.createElement("link");
+      appleIcon.rel = "apple-touch-icon";
+      document.head.appendChild(appleIcon);
+    }
+    appleIcon.href = faviconHref;
   }, [settings.siteName, settings.faviconUrl]);
 
   return (

@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { setSession } from "@/lib/auth";
-import { useSystemSettings, resolveAssetUrl } from "@/lib/settings-context";
+import { useSystemSettings, resolveAssetUrl, DEFAULT_LOGO_LIGHT, DEFAULT_LOGO_DARK } from "@/lib/settings-context";
 import { useLocale } from "@/i18n/context";
 import { useTheme } from "@/theme/context";
 import { LocaleSwitcher } from "@/components/locale-switcher";
@@ -16,8 +16,11 @@ export default function LoginPage() {
   const { t } = useLocale();
   const settings = useSystemSettings();
   const { theme } = useTheme();
+  // Sin logo propio subido todavía: usa el default embebido de la app en
+  // vez de la burbuja genérica con la inicial del nombre.
   const activeLogo = theme === "dark" && settings.logoUrlDark ? settings.logoUrlDark : settings.logoUrl;
-  const logoUrl = resolveAssetUrl(activeLogo);
+  const defaultLogo = theme === "dark" ? DEFAULT_LOGO_DARK : DEFAULT_LOGO_LIGHT;
+  const logoUrl = resolveAssetUrl(activeLogo) ?? defaultLogo;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,17 +70,8 @@ export default function LoginPage() {
       <div className="flex flex-1 items-center justify-center px-4 pb-16">
         <div className="w-full max-w-sm rounded-3xl border border-border bg-surface px-10 py-12 shadow-sm">
           <div className="mb-8 flex flex-col items-center text-center">
-            {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={logoUrl} alt={settings.siteName} className="mb-4 h-10 w-auto" />
-            ) : (
-              <>
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-accent text-lg font-semibold text-accent-foreground">
-                  {settings.siteName.charAt(0).toUpperCase()}
-                </div>
-                <h1 className="text-xl font-medium">{settings.siteName}</h1>
-              </>
-            )}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoUrl} alt={settings.siteName} className="mb-4 h-10 w-auto" />
             <p className="mt-2 text-sm text-muted-foreground">{t("login.subtitle")}</p>
           </div>
 

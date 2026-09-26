@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { clearSession, getStoredUser, getToken, type AuthUser } from "@/lib/auth";
-import { useSystemSettings, resolveAssetUrl } from "@/lib/settings-context";
+import { useSystemSettings, resolveAssetUrl, DEFAULT_LOGO_LIGHT, DEFAULT_LOGO_DARK } from "@/lib/settings-context";
 import { useLocale } from "@/i18n/context";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/theme/context";
@@ -170,7 +170,8 @@ function InboxHeader({
   const settings = useSystemSettings();
   const { theme } = useTheme();
   const activeLogo = theme === "dark" && settings.logoUrlDark ? settings.logoUrlDark : settings.logoUrl;
-  const logoUrl = resolveAssetUrl(activeLogo);
+  const defaultLogo = theme === "dark" ? DEFAULT_LOGO_DARK : DEFAULT_LOGO_LIGHT;
+  const logoUrl = resolveAssetUrl(activeLogo) ?? defaultLogo;
   const { toggleSidebar, authUser } = useInboxView();
   const displayUser = authUser ?? user;
 
@@ -187,17 +188,8 @@ function InboxHeader({
           </svg>
         </button>
         <Link href="/inbox" className="flex items-center gap-2">
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt={settings.siteName} className="h-7 w-auto" />
-          ) : (
-            <>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-sm font-semibold text-accent-foreground">
-                {settings.siteName.charAt(0).toUpperCase()}
-              </div>
-              <span className="hidden text-lg text-muted-foreground sm:inline">{settings.siteName}</span>
-            </>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={logoUrl} alt={settings.siteName} className="h-7 w-auto" />
         </Link>
       </div>
 

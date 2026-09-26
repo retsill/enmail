@@ -39,7 +39,9 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     // Backend no disponible al generar el manifest: se usan los valores por defecto.
   }
 
-  const iconSrc = iconUrl ? (iconUrl.startsWith("http") ? iconUrl : `${API_ORIGIN}${iconUrl}`) : "/next.svg";
+  // Sin favicon propio subido todavía: usa el default embebido en vez del
+  // logo de Next.js.
+  const iconSrc = iconUrl ? (iconUrl.startsWith("http") ? iconUrl : `${API_ORIGIN}${iconUrl}`) : "/favicon.png";
 
   return {
     name: siteName,
