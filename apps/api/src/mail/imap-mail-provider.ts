@@ -373,7 +373,13 @@ export class ImapMailProvider implements MailProviderAdapter {
     const raw = built.message as Buffer;
 
     const transporter = this.getTransporter();
-    const info = await transporter.sendMail({ raw, envelope: built.envelope });
+    // nodemailer tipa el envelope de salida (MimeNodeEnvelope, from: string |
+    // false) distinto del que acepta sendMail (MimeNodeEnvelopeInput) — mismo
+    // comportamiento en runtime, solo hace falta rearmarlo con el tipo que espera.
+    const info = await transporter.sendMail({
+      raw,
+      envelope: { from: built.envelope.from || undefined, to: built.envelope.to },
+    });
 
     return { messageId: info.messageId, raw };
   }
