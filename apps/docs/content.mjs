@@ -956,7 +956,7 @@ npm run build</code></pre>
             <ul>
               <li>Tipo: <strong>External</strong> (a menos que uses Google Workspace y quieras limitarlo a tu organización, ahí elegís <strong>Internal</strong>).</li>
               <li>Completá nombre de la app, email de soporte y de contacto.</li>
-              <li>En <strong>Scopes</strong>, agregá <code>https://mail.google.com/</code> (acceso completo a IMAP/SMTP).</li>
+              <li>En la pestaña <strong>Data access</strong> (antes se llamaba "Scopes"), click en <strong>Add or remove scopes</strong>. El scope <code>https://mail.google.com/</code> (acceso completo a IMAP/SMTP) <strong>no aparece en la tabla filtrada</strong> — bajá hasta el final del panel, pegalo en la caja <strong>"Manually add scopes"</strong> y click <strong>Add to table</strong>. Recién ahí aparece seleccionado; guardá con <strong>Update</strong> y después <strong>Save</strong>.</li>
               <li>Si el consent screen queda en modo "Testing", agregá los emails de tus usuarios como <strong>Test users</strong> — si no, Google les va a bloquear el login. Para que cualquiera pueda conectar sin esa lista, hay que mandar la app a verificación de Google (proceso aparte, no obligatorio para uso interno).</li>
             </ul>
           </li>
@@ -1030,7 +1030,7 @@ npm run build</code></pre>
             <ul>
               <li>Type: <strong>External</strong> (unless you're on Google Workspace and want to restrict it to your org, then pick <strong>Internal</strong>).</li>
               <li>Fill in the app name, support email and contact email.</li>
-              <li>Under <strong>Scopes</strong>, add <code>https://mail.google.com/</code> (full IMAP/SMTP access).</li>
+              <li>On the <strong>Data access</strong> tab (previously called "Scopes"), click <strong>Add or remove scopes</strong>. The <code>https://mail.google.com/</code> scope (full IMAP/SMTP access) <strong>does not show up in the filtered table</strong> — scroll to the bottom of the panel, paste it into the <strong>"Manually add scopes"</strong> box and click <strong>Add to table</strong>. It'll then appear selected; save with <strong>Update</strong> and then <strong>Save</strong>.</li>
               <li>If the consent screen is left in "Testing" mode, add your users' emails as <strong>Test users</strong> — otherwise Google will block their login. To let anyone connect without that list, the app needs to go through Google's verification process (separate, not required for internal use).</li>
             </ul>
           </li>

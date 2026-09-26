@@ -61,7 +61,7 @@
             <ul>
               <li>Type: <strong>External</strong> (unless you're on Google Workspace and want to restrict it to your org, then pick <strong>Internal</strong>).</li>
               <li>Fill in the app name, support email and contact email.</li>
-              <li>Under <strong>Scopes</strong>, add <code>https://mail.google.com/</code> (full IMAP/SMTP access).</li>
+              <li>On the <strong>Data access</strong> tab (previously called "Scopes"), click <strong>Add or remove scopes</strong>. The <code>https://mail.google.com/</code> scope (full IMAP/SMTP access) <strong>does not show up in the filtered table</strong> — scroll to the bottom of the panel, paste it into the <strong>"Manually add scopes"</strong> box and click <strong>Add to table</strong>. It'll then appear selected; save with <strong>Update</strong> and then <strong>Save</strong>.</li>
               <li>If the consent screen is left in "Testing" mode, add your users' emails as <strong>Test users</strong> — otherwise Google will block their login. To let anyone connect without that list, the app needs to go through Google's verification process (separate, not required for internal use).</li>
             </ul>
           </li>
