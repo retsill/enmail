@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hostinger / VPS — enMail Docs</title>
+<meta name="description" content="Instalar enMail en Hostinger u otro VPS." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/hostinger.html" class="active">ES</a>
+      <a href="../en/hostinger.html" class="">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Empezar</h4>
+      <nav>
+        <a href="index.html" class="">Introducción</a>
+      </nav>
+
+      <h4>Instalación</h4>
+      <nav>
+        <a href="docker.html" class="">Con Docker (recomendado)</a>
+<a href="manual.html" class="">Instalación manual</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="active">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Referencia</h4>
+      <nav>
+        <a href="configuration.html" class="">Variables de entorno</a>
+<a href="faq.html" class="">Preguntas frecuentes</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>Hostinger y otros VPS</h1>
+        <p class="lede">Los planes de hosting <strong>compartido</strong> (incluido el hPanel de Hostinger sobre hosting compartido) no dan acceso a Docker ni permiten procesos Node.js de larga duración de forma confiable — para enMail hace falta un <strong>VPS</strong> (Hostinger VPS, DigitalOcean, Vultr, etc.) con acceso root/SSH.</p>
+
+        <h2>Con un VPS de Hostinger (o cualquier otro)</h2>
+        <p>Un VPS es un servidor Linux normal — seguí directamente la <a href="docker.html">guía de instalación con Docker</a>, que es el camino recomendado. Resumen:</p>
+        <ol>
+          <li>Conectate por SSH al VPS.</li>
+          <li>Instalá Docker: <code>curl -fsSL https://get.docker.com | sh</code></li>
+          <li>Cloná el repo, configurá <code>.env</code>, y corré <code>docker compose up -d --build</code>.</li>
+          <li>Apuntá tu dominio (DNS tipo A) a la IP del VPS, y agregá un proxy reverso con Nginx (ver el ejemplo en la <a href="manual.html">guía manual</a>) o instalá un panel como aaPanel/CyberPanel encima para manejar el dominio y el SSL más cómodo.</li>
+        </ol>
+
+        <h2>Firewall</h2>
+        <p>Si vas a exponer los puertos 3000/3001 directo (sin proxy reverso todavía, solo para probar), asegurate de abrirlos en el firewall del proveedor (en hPanel: <strong>VPS → Firewall</strong>) además del firewall del sistema operativo (<code>ufw</code>/<code>firewalld</code>).</p>
+
+        <div class="callout callout-warning"><span class="callout-title">Hosting compartido</span><p>Si solo tenés un plan de hosting compartido (no VPS), no vas a poder correr enMail ahí — necesitás upgradear a un plan VPS o usar otro proveedor con acceso root.</p></div>
+      
+    <div class="page-nav">
+    <a href="plesk.html"><span class="dir">← Anterior</span>Plesk</a>
+    <a href="configuration.html" class="next"><span class="dir">Siguiente →</span>Variables de entorno</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — Licencia MIT</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

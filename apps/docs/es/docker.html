@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Instalación con Docker — enMail Docs</title>
+<meta name="description" content="Levantá enMail con Docker Compose en minutos." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/docker.html" class="active">ES</a>
+      <a href="../en/docker.html" class="">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Empezar</h4>
+      <nav>
+        <a href="index.html" class="">Introducción</a>
+      </nav>
+
+      <h4>Instalación</h4>
+      <nav>
+        <a href="docker.html" class="active">Con Docker (recomendado)</a>
+<a href="manual.html" class="">Instalación manual</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Referencia</h4>
+      <nav>
+        <a href="configuration.html" class="">Variables de entorno</a>
+<a href="faq.html" class="">Preguntas frecuentes</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>Instalación con Docker <span class="badge">Recomendado</span></h1>
+        <p class="lede">Docker Compose levanta los tres servicios (base de datos, API y web) con un solo comando.</p>
+
+        <h2>1. Requisitos</h2>
+        <ul>
+          <li>Docker Engine 24 o superior.</li>
+          <li>El plugin Docker Compose (viene incluido en instalaciones recientes de Docker; se invoca como <code>docker compose</code>, sin guion).</li>
+        </ul>
+
+        <h2>2. Descargar el proyecto</h2>
+        <pre><code>git clone https://github.com/retsill/enmail.git
+cd enmail</code></pre>
+
+        <h2>3. Configurar las variables de entorno</h2>
+        <pre><code>cp .env.example .env</code></pre>
+        <p>Abrí <code>.env</code> y completá, como mínimo:</p>
+        <ul>
+          <li><code>APP_URL</code> y <code>NEXT_PUBLIC_API_URL</code>: el dominio/URL donde vas a acceder (podés dejar <code>localhost</code> para probar en tu propia máquina).</li>
+          <li><code>MYSQL_PASSWORD</code> / <code>MYSQL_ROOT_PASSWORD</code>: contraseñas para la base de datos.</li>
+          <li><code>JWT_SECRET</code> y <code>MAIL_ENCRYPTION_KEY</code>: generalos con <code>openssl rand -hex 32</code> (a <code>MAIL_ENCRYPTION_KEY</code> le tomás los primeros 32 caracteres).</li>
+        </ul>
+        <p>Ver el detalle completo de cada variable en <a href="configuration.html">Variables de entorno</a>.</p>
+
+        <h2>4. Levantar los contenedores</h2>
+        <pre><code>docker compose up -d --build</code></pre>
+        <p>La primera vez tarda unos minutos (construye las imágenes). Al terminar, la API corre las migraciones de base de datos y crea el usuario administrador automáticamente.</p>
+
+        <h2>5. Entrar</h2>
+        <p>Abrí <code>http://localhost:3000</code> (o el dominio que configuraste) e iniciá sesión con:</p>
+        <table>
+          <tr><th>Email</th><td><code>admin@webmail.local</code></td></tr>
+          <tr><th>Contraseña</th><td><code>admin12345</code></td></tr>
+        </table>
+        <div class="callout callout-warning"><span class="callout-title">Cambiá la contraseña</span><p>Entrá a Ajustes → Perfil apenas inicies sesión y cambiá la contraseña del admin. Si preferís elegirla desde el principio, definí <code>SEED_ADMIN_EMAIL</code> y <code>SEED_ADMIN_PASSWORD</code> en tu <code>.env</code> antes del primer <code>docker compose up</code>.</p></div>
+
+        <h2>Comandos útiles</h2>
+        <table>
+          <tr><td><code>docker compose logs -f api</code></td><td>Ver los logs de la API en vivo.</td></tr>
+          <tr><td><code>docker compose restart api web</code></td><td>Reiniciar después de cambiar el <code>.env</code>.</td></tr>
+          <tr><td><code>docker compose down</code></td><td>Apagar todo (los datos de MySQL y los archivos subidos quedan guardados en volúmenes).</td></tr>
+          <tr><td><code>docker compose exec api npm run db:seed</code></td><td>Volver a correr el sembrado (crear admin/conectores) manualmente si hiciera falta.</td></tr>
+        </table>
+
+        <h2>Actualizar a una versión nueva</h2>
+        <pre><code>git pull
+docker compose up -d --build</code></pre>
+
+        <h2>Detrás de un panel (aaPanel, cPanel, Plesk)</h2>
+        <p>Docker Compose no necesita que el panel "sepa" de Docker: corré los comandos de arriba por SSH en el servidor, y después configurá un dominio en tu panel como proxy reverso hacia el puerto que publicaste (<code>WEB_PORT</code>, 3000 por defecto). Ver la guía específica de tu panel en la sección Hosting del menú.</p>
+      
+    <div class="page-nav">
+    <a href="index.html"><span class="dir">← Anterior</span>Introducción</a>
+    <a href="manual.html" class="next"><span class="dir">Siguiente →</span>Instalación manual</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — Licencia MIT</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

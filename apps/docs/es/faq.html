@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Preguntas frecuentes — enMail Docs</title>
+<meta name="description" content="Dudas comunes sobre la instalación y el uso de enMail." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/faq.html" class="active">ES</a>
+      <a href="../en/faq.html" class="">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Empezar</h4>
+      <nav>
+        <a href="index.html" class="">Introducción</a>
+      </nav>
+
+      <h4>Instalación</h4>
+      <nav>
+        <a href="docker.html" class="">Con Docker (recomendado)</a>
+<a href="manual.html" class="">Instalación manual</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Referencia</h4>
+      <nav>
+        <a href="configuration.html" class="">Variables de entorno</a>
+<a href="faq.html" class="active">Preguntas frecuentes</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>Preguntas frecuentes</h1>
+
+        <h3>¿Es gratis? ¿Puedo usarlo en un proyecto comercial?</h3>
+        <p>Sí. enMail se publica bajo licencia MIT: podés usarlo, modificarlo y hasta venderlo como parte de otro producto, sin restricciones.</p>
+
+        <h3>¿Necesito instalar un servidor de correo aparte?</h3>
+        <p>Sí — enMail es el <em>cliente</em> web (como Roundcube), no un servidor IMAP/SMTP. Necesitás uno ya funcionando (el que te da tu hosting con cPanel/aaPanel/Plesk, o cualquier otro proveedor).</p>
+
+        <h3>¿Puedo usar PostgreSQL en vez de MySQL?</h3>
+        <p>Por ahora no — la base de datos de la aplicación (usuarios, preferencias, cache de mensajes) es MySQL únicamente.</p>
+
+        <h3>¿Cómo conecto Gmail/Outlook con OAuth?</h3>
+        <p>Como administrador, andá a <strong>Ajustes → Conectores</strong> y cargá el Client ID/Secret de una app OAuth creada en Google Cloud Console o Azure Portal. Una vez activado el conector, tus usuarios van a ver el botón "Conectar con Google/Microsoft" al agregar una cuenta.</p>
+
+        <h3>¿Dónde se guardan los archivos subidos (logos, avatares, adjuntos)?</h3>
+        <p>En la carpeta <code>apps/api/uploads/</code>. Con Docker, esa carpeta vive en el volumen <code>api-uploads</code> — no se pierde al reconstruir los contenedores, pero conviene incluirla en tus backups.</p>
+
+        <h3>Error "Can't reach database server"</h3>
+        <p>Con Docker: revisá que el contenedor <code>db</code> esté <code>healthy</code> (<code>docker compose ps</code>) y que <code>DATABASE_URL</code> use <code>db</code> como host (no <code>localhost</code>). En instalación manual: confirmá que MySQL esté corriendo y que el usuario/contraseña de <code>DATABASE_URL</code> sean correctos.</p>
+
+        <h3>Cambié <code>NEXT_PUBLIC_API_URL</code> y no pasó nada</h3>
+        <p>Esa variable se incrusta en el código en el momento del <code>build</code> de la web, no se lee en tiempo de ejecución. Después de cambiarla hay que reconstruir: <code>docker compose up -d --build web</code> (Docker) o <code>npm run build</code> de nuevo en <code>apps/web</code> (instalación manual).</p>
+
+        <h3>¿Cómo actualizo a una versión nueva?</h3>
+        <p><code>git pull</code> y, con Docker, <code>docker compose up -d --build</code>. Con instalación manual, repetí el paso de build de ambas apps y reiniciá los procesos de PM2.</p>
+
+        <h3>¿Dónde reporto un problema?</h3>
+        <p>En los <a href="https://github.com/retsill/enmail/issues" target="_blank" rel="noopener">Issues de GitHub</a> del proyecto.</p>
+      
+    <div class="page-nav">
+    <a href="configuration.html"><span class="dir">← Anterior</span>Variables de entorno</a>
+    <span></span>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — Licencia MIT</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

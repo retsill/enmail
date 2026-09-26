@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FAQ — enMail Docs</title>
+<meta name="description" content="Common questions about installing and using enMail." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/faq.html" class="">ES</a>
+      <a href="../en/faq.html" class="active">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Getting started</h4>
+      <nav>
+        <a href="index.html" class="">Introduction</a>
+      </nav>
+
+      <h4>Installation</h4>
+      <nav>
+        <a href="docker.html" class="">With Docker (recommended)</a>
+<a href="manual.html" class="">Manual installation</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Reference</h4>
+      <nav>
+        <a href="configuration.html" class="">Environment variables</a>
+<a href="faq.html" class="active">FAQ</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>Frequently asked questions</h1>
+
+        <h3>Is it free? Can I use it in a commercial project?</h3>
+        <p>Yes. enMail is published under the MIT license: you can use, modify and even sell it as part of another product, with no restrictions.</p>
+
+        <h3>Do I need to install a separate mail server?</h3>
+        <p>Yes — enMail is the web <em>client</em> (like Roundcube), not an IMAP/SMTP server. You need one already running (the one your cPanel/aaPanel/Plesk hosting gives you, or any other provider).</p>
+
+        <h3>Can I use PostgreSQL instead of MySQL?</h3>
+        <p>Not currently — the application database (users, preferences, message cache) is MySQL only.</p>
+
+        <h3>How do I connect Gmail/Outlook via OAuth?</h3>
+        <p>As an admin, go to <strong>Settings → Connectors</strong> and enter the Client ID/Secret of an OAuth app created in Google Cloud Console or Azure Portal. Once the connector is enabled, your users will see the "Connect with Google/Microsoft" button when adding an account.</p>
+
+        <h3>Where are uploaded files (logos, avatars, attachments) stored?</h3>
+        <p>In the <code>apps/api/uploads/</code> folder. With Docker, that folder lives in the <code>api-uploads</code> volume — it survives rebuilding the containers, but you should still include it in your backups.</p>
+
+        <h3>"Can't reach database server" error</h3>
+        <p>With Docker: check that the <code>db</code> container is <code>healthy</code> (<code>docker compose ps</code>) and that <code>DATABASE_URL</code> uses <code>db</code> as the host (not <code>localhost</code>). On a manual install: confirm MySQL is running and that the user/password in <code>DATABASE_URL</code> are correct.</p>
+
+        <h3>I changed <code>NEXT_PUBLIC_API_URL</code> and nothing happened</h3>
+        <p>That variable gets baked into the code at web <code>build</code> time, it's not read at runtime. After changing it you need to rebuild: <code>docker compose up -d --build web</code> (Docker) or run <code>npm run build</code> again in <code>apps/web</code> (manual install).</p>
+
+        <h3>How do I update to a new version?</h3>
+        <p><code>git pull</code>, then with Docker: <code>docker compose up -d --build</code>. With a manual install, repeat the build step for both apps and restart the PM2 processes.</p>
+
+        <h3>Where do I report an issue?</h3>
+        <p>On the project's <a href="https://github.com/retsill/enmail/issues" target="_blank" rel="noopener">GitHub Issues</a>.</p>
+      
+    <div class="page-nav">
+    <a href="configuration.html"><span class="dir">← Previous</span>Environment variables</a>
+    <span></span>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — MIT License</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

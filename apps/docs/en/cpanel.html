@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>cPanel — enMail Docs</title>
+<meta name="description" content="Install enMail on cPanel hosting." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/cpanel.html" class="">ES</a>
+      <a href="../en/cpanel.html" class="active">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Getting started</h4>
+      <nav>
+        <a href="index.html" class="">Introduction</a>
+      </nav>
+
+      <h4>Installation</h4>
+      <nav>
+        <a href="docker.html" class="">With Docker (recommended)</a>
+<a href="manual.html" class="">Manual installation</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="active">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Reference</h4>
+      <nav>
+        <a href="configuration.html" class="">Environment variables</a>
+<a href="faq.html" class="">FAQ</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>cPanel</h1>
+        <p class="lede">cPanel usually doesn't offer Docker on shared plans — install it using the <strong>Setup Node.js App</strong> tool (requires your provider to have the "Node.js Selector"/CloudLinux enabled).</p>
+
+        <h2>1. Create the database</h2>
+        <p><strong>MySQL Databases</strong> → create a database, a user, and grant it all privileges on that database.</p>
+
+        <h2>2. Upload the project</h2>
+        <p>Via Git Version Control (if available) or by uploading a .zip of the repo through File Manager, into a folder outside <code>public_html</code> (e.g. <code>~/enmail</code>).</p>
+
+        <h2>3. Create the API app</h2>
+        <p><strong>Setup Node.js App → Create Application</strong>:</p>
+        <ul>
+          <li><strong>Node.js version:</strong> 20 or newer.</li>
+          <li><strong>Application root:</strong> <code>enmail/apps/api</code></li>
+          <li><strong>Application URL:</strong> the API subdomain, e.g. <code>mail-api.yourdomain.com</code></li>
+          <li><strong>Application startup file:</strong> <code>dist/main.js</code></li>
+        </ul>
+        <p>In that app's <strong>Environment variables</strong>, add <code>DATABASE_URL</code>, <code>JWT_SECRET</code>, <code>MAIL_ENCRYPTION_KEY</code>, <code>FRONTEND_URL</code> (see <a href="configuration.html">Environment variables</a>). Save, then use the <strong>Run NPM Install</strong> button. Then, from the terminal cPanel provides (or "Run JS script"), run:</p>
+        <pre><code>npx prisma migrate deploy
+npm run db:seed
+npm run build</code></pre>
+        <p>And restart the app from the <strong>Restart</strong> button.</p>
+
+        <h2>4. Create the Web app</h2>
+        <p><strong>Create Application</strong> again:</p>
+        <ul>
+          <li><strong>Application root:</strong> <code>enmail/apps/web</code></li>
+          <li><strong>Application URL:</strong> your main domain, e.g. <code>mail.yourdomain.com</code></li>
+          <li><strong>Application startup file:</strong> leave whatever cPanel suggests (it uses <code>npm start</code> internally).</li>
+        </ul>
+        <p>Required environment variable: <code>NEXT_PUBLIC_API_URL=https://mail-api.yourdomain.com/api</code>. Use <strong>Run NPM Install</strong>, then from the terminal:</p>
+        <pre><code>npm run build</code></pre>
+        <p>Restart the app.</p>
+
+        <div class="callout callout-warning"><span class="callout-title">Order matters</span><p><code>NEXT_PUBLIC_API_URL</code> must be set <strong>before</strong> running <code>npm run build</code> on the web app — Next.js bakes it into the code at that point; changing it afterwards has no effect until you rebuild.</p></div>
+
+        <h2>5. SSL</h2>
+        <p><strong>SSL/TLS Status</strong> → enable AutoSSL for both subdomains.</p>
+      
+    <div class="page-nav">
+    <a href="aapanel.html"><span class="dir">← Previous</span>aaPanel</a>
+    <a href="plesk.html" class="next"><span class="dir">Next →</span>Plesk</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — MIT License</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "@webmail/docs",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Documentación estática (HTML/CSS) de enMail — no participa del build de la app, es un sitio aparte para docs.xcodevs.com/enmail.",
+  "scripts": {
+    "generate": "node generate.mjs"
+  }
+}

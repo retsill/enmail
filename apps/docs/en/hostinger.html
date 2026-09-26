@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Hostinger / VPS — enMail Docs</title>
+<meta name="description" content="Install enMail on Hostinger or another VPS." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/hostinger.html" class="">ES</a>
+      <a href="../en/hostinger.html" class="active">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Getting started</h4>
+      <nav>
+        <a href="index.html" class="">Introduction</a>
+      </nav>
+
+      <h4>Installation</h4>
+      <nav>
+        <a href="docker.html" class="">With Docker (recommended)</a>
+<a href="manual.html" class="">Manual installation</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="active">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Reference</h4>
+      <nav>
+        <a href="configuration.html" class="">Environment variables</a>
+<a href="faq.html" class="">FAQ</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>Hostinger and other VPS providers</h1>
+        <p class="lede"><strong>Shared</strong> hosting plans (including Hostinger's hPanel over shared hosting) don't give access to Docker or reliably allow long-running Node.js processes — enMail needs a <strong>VPS</strong> (Hostinger VPS, DigitalOcean, Vultr, etc.) with root/SSH access.</p>
+
+        <h2>With a Hostinger VPS (or any other)</h2>
+        <p>A VPS is a regular Linux server — just follow the <a href="docker.html">Docker installation guide</a> directly, which is the recommended path. Summary:</p>
+        <ol>
+          <li>Connect to the VPS over SSH.</li>
+          <li>Install Docker: <code>curl -fsSL https://get.docker.com | sh</code></li>
+          <li>Clone the repo, configure <code>.env</code>, and run <code>docker compose up -d --build</code>.</li>
+          <li>Point your domain (A record) at the VPS's IP, and add an Nginx reverse proxy (see the example in the <a href="manual.html">manual guide</a>) or install a panel like aaPanel/CyberPanel on top to manage the domain and SSL more comfortably.</li>
+        </ol>
+
+        <h2>Firewall</h2>
+        <p>If you're going to expose ports 3000/3001 directly (without a reverse proxy yet, just to try it out), make sure to open them in the provider's firewall (in hPanel: <strong>VPS → Firewall</strong>) as well as the OS firewall (<code>ufw</code>/<code>firewalld</code>).</p>
+
+        <div class="callout callout-warning"><span class="callout-title">Shared hosting</span><p>If you only have a shared hosting plan (not VPS), you won't be able to run enMail there — you'll need to upgrade to a VPS plan or use another provider with root access.</p></div>
+      
+    <div class="page-nav">
+    <a href="plesk.html"><span class="dir">← Previous</span>Plesk</a>
+    <a href="configuration.html" class="next"><span class="dir">Next →</span>Environment variables</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — MIT License</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

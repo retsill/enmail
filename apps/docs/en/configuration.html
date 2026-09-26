@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Environment variables — enMail Docs</title>
+<meta name="description" content="Full reference of all environment variables." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/configuration.html" class="">ES</a>
+      <a href="../en/configuration.html" class="active">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Getting started</h4>
+      <nav>
+        <a href="index.html" class="">Introduction</a>
+      </nav>
+
+      <h4>Installation</h4>
+      <nav>
+        <a href="docker.html" class="">With Docker (recommended)</a>
+<a href="manual.html" class="">Manual installation</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Reference</h4>
+      <nav>
+        <a href="configuration.html" class="active">Environment variables</a>
+<a href="faq.html" class="">FAQ</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>Environment variables</h1>
+        <p class="lede">If you installed with Docker, all of these are configured in a single <code>.env</code> file at the project root. If you installed manually, they're split between <code>apps/api/.env</code> and <code>apps/web/.env.local</code> (noted in each row).</p>
+
+        <h2>Database</h2>
+        <table>
+          <tr><th>Variable</th><th>Where</th><th>Description</th></tr>
+          <tr><td><code>DATABASE_URL</code></td><td>API</td><td>Full MySQL connection string: <code>mysql://user:password@host:port/database</code>.</td></tr>
+          <tr><td><code>MYSQL_ROOT_PASSWORD</code></td><td>Docker only</td><td>Root password for the MySQL container.</td></tr>
+          <tr><td><code>MYSQL_DATABASE</code></td><td>Docker only</td><td>Name of the database created automatically.</td></tr>
+          <tr><td><code>MYSQL_USER</code> / <code>MYSQL_PASSWORD</code></td><td>Docker only</td><td>User/password the API uses to connect (builds the internal <code>DATABASE_URL</code> for you).</td></tr>
+        </table>
+
+        <h2>Security</h2>
+        <table>
+          <tr><th>Variable</th><th>Where</th><th>Description</th></tr>
+          <tr><td><code>JWT_SECRET</code></td><td>API</td><td>Key used to sign sessions (JWT). Generate with <code>openssl rand -hex 32</code>.</td></tr>
+          <tr><td><code>JWT_EXPIRES_IN</code></td><td>API</td><td>Session duration in seconds (86400 = 24 hours).</td></tr>
+          <tr><td><code>MAIL_ENCRYPTION_KEY</code></td><td>API</td><td>Exactly 32 characters. Encrypts saved mail account passwords/tokens at rest.</td></tr>
+        </table>
+
+        <h2>URLs</h2>
+        <table>
+          <tr><th>Variable</th><th>Where</th><th>Description</th></tr>
+          <tr><td><code>FRONTEND_URL</code></td><td>API</td><td>Public frontend URL — used to build OAuth redirects (Gmail/Outlook) and CORS.</td></tr>
+          <tr><td><code>NEXT_PUBLIC_API_URL</code></td><td>Web</td><td>Public API URL, ending in <code>/api</code>. <strong>Baked into the build</strong> — changing it requires rebuilding the web app.</td></tr>
+          <tr><td><code>PORT</code></td><td>API</td><td>Port the API listens on. Defaults to 3001.</td></tr>
+        </table>
+
+        <h2>Initial seed (optional)</h2>
+        <table>
+          <tr><th>Variable</th><th>Where</th><th>Description</th></tr>
+          <tr><td><code>SEED_ADMIN_EMAIL</code></td><td>API</td><td>Email of the admin user created on first run. Defaults to <code>admin@webmail.local</code>.</td></tr>
+          <tr><td><code>SEED_ADMIN_PASSWORD</code></td><td>API</td><td>Admin password. Defaults to <code>admin12345</code> — change it.</td></tr>
+        </table>
+
+        <div class="callout callout-tip"><span class="callout-title">Generating secrets</span><p>For <code>JWT_SECRET</code>: <code>openssl rand -hex 32</code>. For <code>MAIL_ENCRYPTION_KEY</code> (must be exactly 32 characters): <code>openssl rand -hex 16</code> gives you 32 hex characters.</p></div>
+      
+    <div class="page-nav">
+    <a href="hostinger.html"><span class="dir">← Previous</span>Hostinger / VPS</a>
+    <a href="faq.html" class="next"><span class="dir">Next →</span>FAQ</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — MIT License</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

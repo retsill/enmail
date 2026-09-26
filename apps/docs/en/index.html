@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Introduction — enMail Docs</title>
+<meta name="description" content="What enMail is and how to start installing it." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/index.html" class="">ES</a>
+      <a href="../en/index.html" class="active">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Getting started</h4>
+      <nav>
+        <a href="index.html" class="active">Introduction</a>
+      </nav>
+
+      <h4>Installation</h4>
+      <nav>
+        <a href="docker.html" class="">With Docker (recommended)</a>
+<a href="manual.html" class="">Manual installation</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Reference</h4>
+      <nav>
+        <a href="configuration.html" class="">Environment variables</a>
+<a href="faq.html" class="">FAQ</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>enMail</h1>
+        <p class="lede">A self-hosted webmail with a modern, Gmail-like look, that connects to your own mail server (IMAP/SMTP) — yours, your hosting's (cPanel, aaPanel, Plesk, etc.) or any other. Free and open source.</p>
+
+        <h2>What's included</h2>
+        <ul>
+          <li>Unified inbox across multiple mail accounts, with category tabs (Primary, Social, Promotions, Updates).</li>
+          <li>A custom-built rich text editor (bold, lists, colors, inline images, links).</li>
+          <li>Compose in popup windows (several at once, like Gmail) or full screen.</li>
+          <li>Automatic drafts, contacts with autocomplete, per-account signatures.</li>
+          <li>2 or 3 column layouts (preview to the side or below), adjustable density, light/dark theme, custom background.</li>
+          <li>Admin panel: branding (logo/favicon/name), content pages (Terms, Privacy, etc.), OAuth connectors for Gmail/Outlook.</li>
+          <li>Installable Progressive Web App, using the icon you upload in Settings.</li>
+          <li>Spanish and English interface.</li>
+        </ul>
+
+        <h2>How login works</h2>
+        <p>You don't need to create each user by hand: any mailbox that already exists on your mail server (created from cPanel, aaPanel, Plesk, etc.) can log in directly with its email and mail password — enMail validates against the IMAP server configured in Settings, just like Roundcube does.</p>
+
+        <div class="callout callout-tip"><span class="callout-title">Which install should I use?</span><p>If your server has Docker available (aaPanel supports it via its Docker plugin; any VPS too), it's the simplest path and the one we keep best-tested. If your hosting doesn't offer Docker (shared cPanel/Plesk, for example), use the manual Node.js installation instead.</p></div>
+
+        <div class="card-grid">
+          <a class="card" href="docker.html">
+            <div class="card-icon">🐳</div>
+            <h3>Install with Docker</h3>
+            <p>One command brings up the database, API and web app.</p>
+          </a>
+          <a class="card" href="manual.html">
+            <div class="card-icon">⚙️</div>
+            <h3>Manual installation</h3>
+            <p>Node.js + PM2 + Nginx, for hosting without Docker.</p>
+          </a>
+          <a class="card" href="aapanel.html">
+            <div class="card-icon">🖥️</div>
+            <h3>Panel guides</h3>
+            <p>aaPanel, cPanel, Plesk and Hostinger step by step.</p>
+          </a>
+        </div>
+
+        <h2>Requirements</h2>
+        <table>
+          <tr><th>With Docker</th><td>Docker Engine 24+ and the Docker Compose plugin. Nothing else — MySQL runs inside a container.</td></tr>
+          <tr><th>Manual install</th><td>Node.js 20 or newer, MySQL 8, and optionally PM2 + Nginx/Apache as a reverse proxy.</td></tr>
+          <tr><th>Mail server</th><td>Any existing IMAP/SMTP server (Dovecot/Exim via cPanel, aaPanel, Plesk, Google Workspace, etc.). enMail doesn't replace your mail server, it's the web client.</td></tr>
+        </table>
+
+        <h2>License</h2>
+        <p>enMail is free software, published under the MIT license. You can use, modify and redistribute it freely, including in commercial projects.</p>
+      
+    <div class="page-nav">
+    <span></span>
+    <a href="docker.html" class="next"><span class="dir">Next →</span>With Docker (recommended)</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — MIT License</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

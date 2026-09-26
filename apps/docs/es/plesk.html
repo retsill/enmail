@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Plesk — enMail Docs</title>
+<meta name="description" content="Instalar enMail en un hosting con Plesk." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/plesk.html" class="active">ES</a>
+      <a href="../en/plesk.html" class="">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Empezar</h4>
+      <nav>
+        <a href="index.html" class="">Introducción</a>
+      </nav>
+
+      <h4>Instalación</h4>
+      <nav>
+        <a href="docker.html" class="">Con Docker (recomendado)</a>
+<a href="manual.html" class="">Instalación manual</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="active">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Referencia</h4>
+      <nav>
+        <a href="configuration.html" class="">Variables de entorno</a>
+<a href="faq.html" class="">Preguntas frecuentes</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>Plesk</h1>
+        <p class="lede">Plesk tiene una extensión de <strong>Node.js</strong> equivalente a la de cPanel. Si tu Plesk tiene la extensión Docker, también podés seguir el mismo enfoque que en <a href="aapanel.html">aaPanel</a> (Docker + proxy reverso).</p>
+
+        <h2>1. Base de datos</h2>
+        <p><strong>Sitios web y dominios → Bases de datos</strong> → creá una base MySQL y un usuario con todos los permisos.</p>
+
+        <h2>2. Subir el proyecto</h2>
+        <p>Por Git (Plesk tiene integración de Git) o subiendo los archivos por el Administrador de Archivos, en un dominio/subdominio.</p>
+
+        <h2>3. Configurar la app de la API</h2>
+        <p>En el dominio/subdominio de la API (ej. <code>mail-api.tudominio.com</code>), pestaña <strong>Node.js</strong>:</p>
+        <ul>
+          <li><strong>Document root:</strong> <code>apps/api</code></li>
+          <li><strong>Application startup file:</strong> <code>dist/main.js</code></li>
+          <li><strong>Versión de Node.js:</strong> 20+</li>
+        </ul>
+        <p>Cargá las variables de entorno (<code>DATABASE_URL</code>, <code>JWT_SECRET</code>, <code>MAIL_ENCRYPTION_KEY</code>, <code>FRONTEND_URL</code> — ver <a href="configuration.html">Variables de entorno</a>), y usá <strong>NPM install</strong>. Con acceso SSH, corré:</p>
+        <pre><code>npx prisma migrate deploy
+npm run db:seed
+npm run build</code></pre>
+        <p>Reiniciá la app Node desde Plesk.</p>
+
+        <h2>4. Configurar la app de la Web</h2>
+        <p>En tu dominio principal, pestaña <strong>Node.js</strong>, con <strong>Document root</strong> apuntando a <code>apps/web</code>. Variable de entorno: <code>NEXT_PUBLIC_API_URL=https://mail-api.tudominio.com/api</code> (definila antes de compilar). <strong>NPM install</strong> y luego, por SSH:</p>
+        <pre><code>npm run build</code></pre>
+        <p>Reiniciá.</p>
+
+        <h2>5. SSL</h2>
+        <p><strong>Sitios web y dominios → Certificados SSL/TLS</strong> → Let's Encrypt, para ambos dominios/subdominios.</p>
+      
+    <div class="page-nav">
+    <a href="cpanel.html"><span class="dir">← Anterior</span>cPanel</a>
+    <a href="hostinger.html" class="next"><span class="dir">Siguiente →</span>Hostinger / VPS</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — Licencia MIT</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

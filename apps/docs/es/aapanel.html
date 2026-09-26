@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>aaPanel — enMail Docs</title>
+<meta name="description" content="Instalar enMail en un servidor con aaPanel." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/aapanel.html" class="active">ES</a>
+      <a href="../en/aapanel.html" class="">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Empezar</h4>
+      <nav>
+        <a href="index.html" class="">Introducción</a>
+      </nav>
+
+      <h4>Instalación</h4>
+      <nav>
+        <a href="docker.html" class="">Con Docker (recomendado)</a>
+<a href="manual.html" class="">Instalación manual</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="active">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Referencia</h4>
+      <nav>
+        <a href="configuration.html" class="">Variables de entorno</a>
+<a href="faq.html" class="">Preguntas frecuentes</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>aaPanel</h1>
+        <p class="lede">aaPanel no necesita "saber" que estás usando Docker o Node — es un panel para administrar dominios/SSL/archivos sobre un Linux normal. La forma más simple es instalar con Docker por SSH y usar aaPanel solo para el dominio y el certificado.</p>
+
+        <h2>Opción A: Docker (recomendada)</h2>
+        <h3>1. Instalar Docker</h3>
+        <p>Desde aaPanel: <strong>App Store → Docker</strong> → instalar. O por SSH:</p>
+        <pre><code>curl -fsSL https://get.docker.com | sh</code></pre>
+
+        <h3>2. Subir el proyecto</h3>
+        <p>Por SSH (o con el administrador de archivos de aaPanel):</p>
+        <pre><code>cd /www/wwwroot
+git clone https://github.com/retsill/enmail.git
+cd enmail
+cp .env.example .env
+nano .env   # completá dominio, contraseñas y secretos</code></pre>
+
+        <h3>3. Levantar los contenedores</h3>
+        <pre><code>docker compose up -d --build</code></pre>
+
+        <h3>4. Crear los sitios en aaPanel</h3>
+        <p>En <strong>Website → Add site</strong>, creá dos entradas (dos subdominios), sin PHP, y activá <strong>Reverse Proxy</strong> en cada una:</p>
+        <table>
+          <tr><th>Subdominio</th><th>Proxy hacia</th></tr>
+          <tr><td><code>mail.tudominio.com</code></td><td><code>http://127.0.0.1:3000</code> (contenedor <code>web</code>)</td></tr>
+          <tr><td><code>mail-api.tudominio.com</code></td><td><code>http://127.0.0.1:3001</code> (contenedor <code>api</code>)</td></tr>
+        </table>
+        <p>Recordá que <code>NEXT_PUBLIC_API_URL</code> en tu <code>.env</code> debe apuntar a <code>https://mail-api.tudominio.com/api</code> <em>antes</em> de correr <code>docker compose up -d --build</code> (esta variable queda "horneada" en el build de la web).</p>
+
+        <h3>5. SSL</h3>
+        <p>En cada sitio, pestaña <strong>SSL</strong> → <strong>Let's Encrypt</strong> → solicitar certificado. Gratis y se renueva solo.</p>
+
+        <h2>Opción B: Node.js directo (sin Docker)</h2>
+        <p>Si preferís no usar Docker, instalá el plugin <strong>Node.js Version Manager</strong> desde el App Store de aaPanel, y seguí la <a href="manual.html">guía de instalación manual</a> — aaPanel te deja elegir la versión de Node y administrar el proceso con PM2 desde su propia interfaz, en vez de hacerlo todo por SSH.</p>
+      
+    <div class="page-nav">
+    <a href="manual.html"><span class="dir">← Anterior</span>Instalación manual</a>
+    <a href="cpanel.html" class="next"><span class="dir">Siguiente →</span>cPanel</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — Licencia MIT</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

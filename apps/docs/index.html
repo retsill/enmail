@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="refresh" content="0; url=es/index.html" />
+<title>enMail Docs</title>
+<script>
+  // Manda a inglés si el navegador no está en español; si no, español por defecto.
+  var lang = (navigator.language || "es").toLowerCase().startsWith("es") ? "es" : "en";
+  window.location.replace(lang + "/index.html");
+</script>
+</head>
+<body>
+  <p>Redirigiendo… / Redirecting… <a href="es/index.html">Español</a> · <a href="en/index.html">English</a></p>
+</body>
+</html>

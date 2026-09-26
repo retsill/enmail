@@ -1,0 +1,309 @@
+// Prisma schema — Webmail Propio (core)
+// Motor actual: MySQL (MAMP). El instalador permitirá elegir MySQL/PostgreSQL
+// mas adelante; por ahora se desarrolla directo contra MySQL.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+// LOCAL: cuenta creada dentro de la app (ej. el admin del instalador), se valida
+// con passwordHash. MAIL_SERVER: la identidad ES la cuenta de correo — se
+// valida en cada login directo contra el servidor IMAP configurado
+// (MailServerSettings), igual que Roundcube. Así, cualquier buzón creado desde
+// cPanel/Plesk/aaPanel/etc. funciona solo con iniciar sesión, sin darlo de
+// alta a mano.
+enum UserAuthSource {
+  LOCAL
+  MAIL_SERVER
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String?
+  avatarUrl    String?
+  authSource   UserAuthSource @default(LOCAL)
+  role         UserRole       @default(USER)
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Preferencia de layout del webmail: 2 columnas (lista + lectura) o 3
+  // (carpetas | lista | lectura) simultáneas.
+  layoutColumns Int @default(2)
+
+  // Cómo se abre el compositor: ventana emergente (esquina, estilo Gmail) o
+  // pantalla completa.
+  composeStyle ComposeStyle @default(POPUP)
+
+  // Cantidad de correos por página en la lista (paginación estilo Gmail).
+  pageSize Int @default(50)
+
+  // Densidad de la lista de mensajes (alto de cada fila).
+  density MailDensity @default(DEFAULT)
+
+  // Fondo personalizado de la app: color sólido o imagen subida por el
+  // usuario. themeBackground guarda el color (#rrggbb) o la URL de la
+  // imagen según themeBackgroundType.
+  themeBackgroundType ThemeBackgroundType @default(NONE)
+  themeBackground     String?
+  // Qué tan opacos se ven los paneles (header/sidebar/lista/ajustes) sobre
+  // el fondo personalizado — 100 = igual que antes de tener fondo (paneles
+  // sólidos), más bajo deja ver más el fondo a través. Solo importa cuando
+  // themeBackgroundType no es NONE.
+  backgroundOpacity Int @default(82)
+
+  // Categorías (estilo Gmail: Social/Promociones/Notificaciones/Foros) que
+  // el usuario eligió mostrar como tabs en la lista de mensajes. null =
+  // todas habilitadas (default). "PRIMARY" siempre se muestra si hay tabs.
+  enabledCategories Json?
+
+  mailAccounts MailAccount[]
+  contacts     Contact[]
+
+  @@map("users")
+}
+
+enum ComposeStyle {
+  POPUP
+  FULLSCREEN
+}
+
+enum MailDensity {
+  DEFAULT
+  COMFORTABLE
+  COMPACT
+}
+
+enum ThemeBackgroundType {
+  NONE
+  COLOR
+  IMAGE
+}
+
+enum MailMessageCategory {
+  PRIMARY
+  SOCIAL
+  PROMOTIONS
+  UPDATES
+  FORUMS
+}
+
+enum MailAccountProvider {
+  IMAP // cuenta contra el servidor de correo propio del cliente (core, sin licencia)
+  GMAIL
+  OUTLOOK
+  YAHOO
+}
+
+// Cuenta de correo conectada por un usuario. El core solo activa IMAP libremente;
+// GMAIL/OUTLOOK/YAHOO quedan reservados para add-ons con licencia (ver AddonLicense).
+model MailAccount {
+  id       String              @id @default(cuid())
+  userId   String
+  user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider MailAccountProvider @default(IMAP)
+  label    String // nombre visible ("Trabajo", "Soporte", etc.)
+
+  emailAddress String
+
+  // Config IMAP/SMTP del servidor de correo propio (solo aplica cuando provider = IMAP)
+  imapHost String?
+  imapPort Int?
+  imapTls  Boolean @default(true)
+  smtpHost String?
+  smtpPort Int?
+  smtpTls  Boolean @default(true)
+
+  username          String? // usuario de login en el servidor de correo
+  encryptedPassword String? @db.Text // password (IMAP) o refresh token (OAuth), cifrado en reposo
+
+  signature   String? @db.Text // firma HTML/texto que se agrega al redactar desde esta cuenta
+  displayName String? // nombre que aparece en el "De" del correo enviado (si vacío, solo la dirección)
+
+  // Cuenta principal auto-provisionada al hacer login directo contra el
+  // servidor de correo (ver User.authSource = MAIL_SERVER). Las cuentas
+  // agregadas manualmente (estilo "agregar otra cuenta" de Gmail) llevan false.
+  isPrimary Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  folders  MailFolder[]
+  messages MailMessage[]
+
+  @@index([userId])
+  @@map("mail_accounts")
+}
+
+model MailFolder {
+  id            String      @id @default(cuid())
+  mailAccountId String
+  mailAccount   MailAccount @relation(fields: [mailAccountId], references: [id], onDelete: Cascade)
+
+  name       String // nombre visible
+  path       String // path IMAP real (INBOX, INBOX.Sent, etc.)
+  specialUse String? // \Inbox, \Sent, \Drafts, \Trash, \Junk, \Archive
+  color      String? // etiqueta de color estilo Gmail (solo cosmético, local)
+  isCustom   Boolean @default(false) // creada por el usuario desde el webmail
+
+  unreadCount Int @default(0)
+  totalCount  Int @default(0)
+
+  messages MailMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([mailAccountId, path])
+  @@index([mailAccountId])
+  @@map("mail_folders")
+}
+
+// Cache local de mensajes (metadata) para listar rápido sin golpear IMAP en cada request.
+// El cuerpo completo puede recuperarse on-demand del servidor y cachearse opcionalmente.
+model MailMessage {
+  id            String      @id @default(cuid())
+  mailAccountId String
+  mailAccount   MailAccount @relation(fields: [mailAccountId], references: [id], onDelete: Cascade)
+  folderId      String
+  folder        MailFolder  @relation(fields: [folderId], references: [id], onDelete: Cascade)
+
+  uid       Int // UID IMAP dentro de la carpeta
+  messageId String? @db.Text // Message-ID header (algunos remitentes generan IDs larguísimos)
+
+  subject     String?  @db.Text
+  fromAddress String?  @db.Text
+  fromName    String?  @db.Text
+  toAddresses Json?
+  ccAddresses Json?
+
+  snippet String? @db.Text
+  hasAttachments Boolean @default(false)
+
+  // Categoría estilo Gmail (Principal/Social/Promociones/Notificaciones),
+  // calculada por heurística simple en el sync — no es un clasificador ML.
+  category MailMessageCategory @default(PRIMARY)
+
+  isRead    Boolean  @default(false)
+  isFlagged Boolean  @default(false)
+  isDraft   Boolean  @default(false)
+
+  receivedAt DateTime?
+  sizeBytes  Int?
+
+  bodyCache Json? // { text, html } cacheado opcionalmente
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([folderId, uid])
+  @@index([mailAccountId])
+  @@index([folderId])
+  @@map("mail_messages")
+}
+
+// Contacto guardado automáticamente al enviar un correo (o creado a mano):
+// alimenta el autocompletado del campo "Para" al redactar.
+model Contact {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  email String
+  name  String?
+
+  timesUsed  Int      @default(1)
+  lastUsedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, email])
+  @@index([userId])
+  @@map("contacts")
+}
+
+// --- Configuración global ------------------------------------------------
+// Singleton (id fijo "default"). La generará el instalador web más adelante;
+// por ahora se edita desde /settings (admin) o se siembra por seed/env.
+
+model MailServerSettings {
+  id String @id @default("default")
+
+  imapHost String
+  imapPort Int     @default(993)
+  imapTls  Boolean @default(true)
+
+  smtpHost String
+  smtpPort Int     @default(587)
+  smtpTls  Boolean @default(false)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("mail_server_settings")
+}
+
+model SystemSettings {
+  id String @id @default("default")
+
+  siteName      String  @default("Webmail")
+  logoUrl       String? // logo para tema claro
+  logoUrlDark   String? // logo para tema oscuro (opcional; si no está, se usa logoUrl en ambos)
+  faviconUrl    String?
+  defaultLocale String  @default("es")
+
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// --- Conectores externos (Gmail, Outlook, Yahoo, ...) ---------------------
+// Uso interno de la empresa (no se vende). El admin registra la app OAuth de
+// cada proveedor (client id/secret) aquí; el usuario final solo ve el botón
+// "Conectar" si el admin ya lo configuró y activó.
+
+// Páginas de contenido que el admin arma desde Ajustes (Términos, Privacidad,
+// etc.) — reemplaza las rutas fijas de antes: el título sale en el footer y
+// el contenido se muestra en un modal, tanto logueado como desde el login.
+model SitePage {
+  id      String @id @default(cuid())
+  title   String
+  content String @db.Text
+  order   Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("site_pages")
+}
+
+model Addon {
+  id          String  @id @default(cuid())
+  slug        String  @unique // "gmail", "outlook", "yahoo", "aol"
+  name        String
+  description String? @db.Text
+
+  enabled              Boolean @default(false)
+  clientId             String?
+  encryptedClientSecret String? @db.Text
+  redirectUri          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("addons")
+}

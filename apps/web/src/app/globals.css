@@ -1,0 +1,199 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f8fc;
+  --foreground: #1f1f1f;
+  --surface: #ffffff;
+  --surface-muted: #f1f3f4;
+  --surface-hover: #e8eaed;
+  --border: #e3e6ea;
+  --muted-foreground: #5f6368;
+  --accent: #1a73e8;
+  --accent-hover: #1765cc;
+  --accent-foreground: #ffffff;
+  --accent-soft: #e8f0fe;
+  --danger: #d93025;
+  --editor-toolbar-bg: #f7fbff;
+  --editor-toolbar-border: #e3f0fc;
+  --editor-toolbar-divider: #d3e9fb;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --background: #202124;
+    --foreground: #e8eaed;
+    --surface: #2d2e30;
+    --surface-muted: #35363a;
+    --surface-hover: #3c4043;
+    --border: #3c4043;
+    --muted-foreground: #9aa0a6;
+    --accent: #8ab4f8;
+    --accent-hover: #aecbfa;
+    --accent-foreground: #202124;
+    --accent-soft: #2b3a4d;
+    --danger: #f28b82;
+    --editor-toolbar-bg: #26364a;
+    --editor-toolbar-border: #37506b;
+    --editor-toolbar-divider: #3f5a78;
+  }
+}
+
+:root[data-theme="dark"] {
+  --background: #202124;
+  --foreground: #e8eaed;
+  --surface: #2d2e30;
+  --surface-muted: #35363a;
+  --surface-hover: #3c4043;
+  --border: #3c4043;
+  --muted-foreground: #9aa0a6;
+  --accent: #8ab4f8;
+  --accent-hover: #aecbfa;
+  --accent-foreground: #202124;
+  --accent-soft: #2b3a4d;
+  --danger: #f28b82;
+  --editor-toolbar-bg: #26364a;
+  --editor-toolbar-border: #37506b;
+  --editor-toolbar-divider: #3f5a78;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Fondo personalizado (Ajustes > Temas > Fondo): con un color/imagen activo,
+   los paneles que normalmente son opacos (bg-surface/bg-background/
+   bg-surface-muted) pasan a ser translúcidos con blur, para que el fondo se
+   vea A TRAVÉS de toda la app — header, sidebar, lista de correos, ajustes —
+   en vez de solo notarse alrededor del borde. El texto/controles quedan
+   igual de legibles porque el velo blanco/oscuro semitransparente sigue
+   dando contraste, y el blur separa el contenido del fondo detrás. */
+/* --bg-opacity: 0-1, ajustable desde Ajustes > Temas > Fondo (slider de
+   transparencia) — layout.tsx lo pone como inline style en <html> según la
+   preferencia guardada; el valor de acá abajo es solo el default antes de
+   que ese script corra o si el usuario nunca lo tocó. Los otros tres se
+   derivan proporcionalmente para mantener la misma jerarquía visual de
+   antes (muted más débil, hover más fuerte) sin importar el nivel elegido. */
+:root[data-custom-bg="true"] {
+  --bg-opacity: 0.82;
+  --surface: rgb(255 255 255 / var(--bg-opacity));
+  --surface-muted: rgb(255 255 255 / calc(var(--bg-opacity) * 0.83));
+  --surface-hover: rgb(255 255 255 / calc(var(--bg-opacity) * 1.12));
+  --background: rgb(255 255 255 / calc(var(--bg-opacity) * 0.95));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-custom-bg="true"]:not([data-theme="light"]) {
+    --surface: rgb(32 33 36 / var(--bg-opacity));
+    --surface-muted: rgb(32 33 36 / calc(var(--bg-opacity) * 0.83));
+    --surface-hover: rgb(60 64 67 / calc(var(--bg-opacity) * 1.04));
+    --background: rgb(20 21 23 / calc(var(--bg-opacity) * 0.95));
+  }
+}
+
+:root[data-custom-bg="true"][data-theme="dark"] {
+  --surface: rgb(32 33 36 / var(--bg-opacity));
+  --surface-muted: rgb(32 33 36 / calc(var(--bg-opacity) * 0.83));
+  --surface-hover: rgb(60 64 67 / calc(var(--bg-opacity) * 1.04));
+  --background: rgb(20 21 23 / calc(var(--bg-opacity) * 0.95));
+}
+
+:root[data-custom-bg="true"] .bg-surface,
+:root[data-custom-bg="true"] .bg-background,
+:root[data-custom-bg="true"] .bg-surface-muted {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Los modales (confirmar, agregar/editar cuenta, progreso, etc.) van sobre
+   su propio fondo oscuro semitransparente — no necesitan ni se ven bien
+   con el vidriera esmerilada del fondo personalizado: se ponen sólidos
+   siempre, sin importar si hay un fondo activo. */
+:root[data-custom-bg="true"] .modal-backdrop .bg-surface,
+:root[data-custom-bg="true"] .modal-backdrop .bg-surface-muted {
+  background-color: #ffffff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-custom-bg="true"]:not([data-theme="light"]) .modal-backdrop .bg-surface,
+  :root[data-custom-bg="true"]:not([data-theme="light"]) .modal-backdrop .bg-surface-muted {
+    background-color: #2d2e30;
+  }
+}
+
+:root[data-custom-bg="true"][data-theme="dark"] .modal-backdrop .bg-surface,
+:root[data-custom-bg="true"][data-theme="dark"] .modal-backdrop .bg-surface-muted {
+  background-color: #2d2e30;
+}
+
+/* Botón "⋯" que oculta el contenido citado al responder/reenviar (estilo
+   Gmail) — se inserta como HTML crudo en el cuerpo del compositor, así que
+   necesita ser CSS de verdad (con onclick inline) en vez de un componente
+   React: ese HTML vive dentro de un contentEditable plano, no en el DOM
+   virtual de React. */
+.quote-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--editor-toolbar-bg);
+  border: 1px solid var(--editor-toolbar-border);
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  user-select: none;
+  margin: 4px 0;
+}
+.quote-toggle:hover {
+  background: var(--editor-toolbar-divider);
+}
+.quoted-content {
+  display: none;
+  margin: 4px 0 0;
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+  color: var(--muted-foreground);
+}
+.quoted-content.expanded {
+  display: block;
+}
+
+@layer components {
+  .input {
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    background: var(--background);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+    color: var(--foreground);
+  }
+
+  .input:focus {
+    border-color: var(--accent);
+  }
+}
+

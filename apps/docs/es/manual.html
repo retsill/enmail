@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Instalación manual — enMail Docs</title>
+<meta name="description" content="Instalar enMail sin Docker, con Node.js, PM2 y Nginx." />
+<link rel="stylesheet" href="../assets/style.css" />
+</head>
+<body>
+<header class="top-bar">
+  <button class="menu-toggle" id="menuToggle" aria-label="Menu">☰</button>
+  <a href="index.html" class="brand"><span class="logo-dot">e</span><span class="brand-text">enMail</span></a>
+  <div class="top-actions">
+    <div class="lang-switch">
+      <a href="../es/manual.html" class="active">ES</a>
+      <a href="../en/manual.html" class="">EN</a>
+    </div>
+    <a class="gh-link" href="https://github.com/retsill/enmail" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</header>
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+      <h4>Empezar</h4>
+      <nav>
+        <a href="index.html" class="">Introducción</a>
+      </nav>
+
+      <h4>Instalación</h4>
+      <nav>
+        <a href="docker.html" class="">Con Docker (recomendado)</a>
+<a href="manual.html" class="active">Instalación manual</a>
+      </nav>
+
+      <h4>Hosting</h4>
+      <nav>
+        <a href="aapanel.html" class="">aaPanel</a>
+<a href="cpanel.html" class="">cPanel</a>
+<a href="plesk.html" class="">Plesk</a>
+<a href="hostinger.html" class="">Hostinger / VPS</a>
+      </nav>
+
+      <h4>Referencia</h4>
+      <nav>
+        <a href="configuration.html" class="">Variables de entorno</a>
+<a href="faq.html" class="">Preguntas frecuentes</a>
+      </nav></aside>
+  <main class="content">
+    
+        <h1>Instalación manual (sin Docker)</h1>
+        <p class="lede">Para hosting que no ofrece Docker: cPanel/Plesk compartidos, o cualquier VPS donde prefieras correrlo directo con Node.js.</p>
+
+        <h2>1. Requisitos</h2>
+        <ul>
+          <li>Node.js 20 o superior y npm.</li>
+          <li>MySQL 8 (o MariaDB 10.6+).</li>
+          <li><a href="https://pm2.keymetrics.io/" target="_blank" rel="noopener">PM2</a> para mantener los procesos corriendo.</li>
+          <li>Nginx o Apache como proxy reverso (para servir por HTTPS en el puerto 443 en vez de exponer los puertos 3000/3001 directo).</li>
+        </ul>
+
+        <h2>2. Descargar y preparar</h2>
+        <pre><code>git clone https://github.com/retsill/enmail.git
+cd enmail
+npm install</code></pre>
+
+        <h2>3. Base de datos</h2>
+        <p>Creá una base de datos y un usuario MySQL para la app (por ejemplo, desde phpMyAdmin/adminer de tu panel, o por línea de comandos):</p>
+        <pre><code>CREATE DATABASE webmail;
+CREATE USER 'webmail'@'localhost' IDENTIFIED BY 'una-contraseña-segura';
+GRANT ALL PRIVILEGES ON webmail.* TO 'webmail'@'localhost';</code></pre>
+
+        <h2>4. Variables de entorno</h2>
+        <pre><code>cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local</code></pre>
+        <p>Completá <code>apps/api/.env</code> con tu <code>DATABASE_URL</code> real y valores propios de <code>JWT_SECRET</code>/<code>MAIL_ENCRYPTION_KEY</code>. En <code>apps/web/.env.local</code> poné la URL pública de la API en <code>NEXT_PUBLIC_API_URL</code> (por ejemplo <code>https://mail-api.tudominio.com/api</code>). Detalle completo en <a href="configuration.html">Variables de entorno</a>.</p>
+
+        <h2>5. Migraciones y build</h2>
+        <pre><code>cd apps/api
+npx prisma migrate deploy
+npm run db:seed
+npm run build
+cd ../web
+npm run build
+cd ../..</code></pre>
+
+        <h2>6. Correr con PM2</h2>
+        <pre><code>pm2 start apps/api/dist/main.js --name enmail-api
+pm2 start "npm run start" --name enmail-web --cwd apps/web
+pm2 save
+pm2 startup</code></pre>
+        <p>La API queda escuchando en el puerto 3001 y la web en el 3000 (podés cambiarlo con la variable <code>PORT</code>).</p>
+
+        <h2>7. Proxy reverso con Nginx</h2>
+        <p>Ejemplo de configuración para dos subdominios (uno para la web, otro para la API):</p>
+        <pre><code>server {
+  server_name mail.tudominio.com;
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+}
+
+server {
+  server_name mail-api.tudominio.com;
+  location / {
+    proxy_pass http://127.0.0.1:3001;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+  }
+}</code></pre>
+        <p>Después agregá HTTPS con Let's Encrypt (<code>certbot --nginx</code>) para ambos subdominios.</p>
+
+        <div class="callout callout-tip"><span class="callout-title">Con panel de control</span><p>Si tu servidor tiene cPanel, aaPanel o Plesk, casi siempre es más simple usar la función propia del panel para manejar el dominio/SSL/proceso Node en vez de tocar Nginx a mano. Ver la guía de tu panel en la sección Hosting.</p></div>
+      
+    <div class="page-nav">
+    <a href="docker.html"><span class="dir">← Anterior</span>Con Docker (recomendado)</a>
+    <a href="aapanel.html" class="next"><span class="dir">Siguiente →</span>aaPanel</a>
+  </div>
+  </main>
+</div>
+<footer class="site-footer">Worked: XcoDevs, by: Enwebs Estudios — Licencia MIT</footer>
+<script>
+  var toggle = document.getElementById("menuToggle");
+  var sidebar = document.getElementById("sidebar");
+  if (toggle && sidebar) {
+    toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
+    sidebar.querySelectorAll("a").forEach(function (a) {
+      a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+</script>
+</body>
+</html>

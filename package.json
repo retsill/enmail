@@ -1,0 +1,20 @@
+{
+  "name": "enmail",
+  "version": "0.1.0",
+  "description": "Webmail propio, estilo Gmail, que se conecta a tu servidor IMAP/SMTP existente.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/retsill/enmail.git"
+  },
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev --workspace api",
+    "dev:web": "npm run dev --workspace web",
+    "db:seed": "npm run db:seed --workspace api"
+  }
+}

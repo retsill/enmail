@@ -1,0 +1,56 @@
+# Instalación con un solo comando: copiá .env.example a .env, completá los
+# valores, y corré "docker compose up -d --build". Guía completa en
+# docs/INSTALL.md (y docs/hosting/ para cPanel/aaPanel/Plesk/Hostinger).
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change-me}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-webmail}
+      MYSQL_USER: ${MYSQL_USER:-webmail}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change-me}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-change-me}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://${MYSQL_USER:-webmail}:${MYSQL_PASSWORD:-change-me}@db:3306/${MYSQL_DATABASE:-webmail}
+      JWT_SECRET: ${JWT_SECRET:-change-me-to-a-random-secret}
+      JWT_EXPIRES_IN: "86400"
+      MAIL_ENCRYPTION_KEY: ${MAIL_ENCRYPTION_KEY:-change-me-32-characters-exactly!}
+      FRONTEND_URL: ${APP_URL:-http://localhost:3000}
+      PORT: 3001
+    ports:
+      - "${API_PORT:-3001}:3001"
+    volumes:
+      - api-uploads:/app/apps/api/uploads
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+
+volumes:
+  mysql-data:
+  api-uploads:
