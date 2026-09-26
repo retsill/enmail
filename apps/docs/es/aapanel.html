@@ -64,6 +64,18 @@ cp .env.example .env
 nano .env   # completá dominio, contraseñas y secretos</code></pre>
 
         <h3>3. Levantar los contenedores</h3>
+        <p>Tenés dos formas, a elección — hacen exactamente lo mismo:</p>
+
+        <h4>Opción con la interfaz de Docker de aaPanel (sin terminal)</h4>
+        <ol>
+          <li>Menú lateral → <strong>Docker</strong> → pestaña <strong>Docker Compose</strong> (NO la pestaña "Container": esa es para crear un contenedor suelto a mano, uno por uno — enMail son 3 servicios coordinados por un mismo <code>docker-compose.yml</code>, así que necesitás la pestaña "Docker Compose").</li>
+          <li>Click en <strong>Add project</strong> / <strong>Create</strong>. Ponele un nombre (ej. <code>enmail</code>).</li>
+          <li>En "Path"/"Directory" apuntá a la carpeta donde clonaste el proyecto (ej. <code>/www/wwwroot/enmail</code>) — aaPanel va a leer el <code>docker-compose.yml</code> que ya está ahí. Si tu versión de aaPanel te pide pegar el contenido del compose en vez de apuntar a una ruta, abrí <code>docker-compose.yml</code> con el Administrador de archivos y copiá/pegá su contenido.</li>
+          <li>Confirmá/Deploy. aaPanel corre el equivalente a <code>docker compose up -d --build</code> y te va a mostrar el estado de los 3 contenedores (<code>db</code>, <code>api</code>, <code>web</code>) en la pestaña Container una vez levantados.</li>
+        </ol>
+        <div class="callout callout-tip"><span class="callout-title">Si tu aaPanel no tiene 'Docker Compose'</span><p>Las versiones más viejas del plugin Docker de aaPanel no traen la pestaña Docker Compose. En ese caso usá la Terminal que trae aaPanel (menú lateral → <strong>Terminal</strong>) para correr el comando de abajo — es lo mismo, sin salir del navegador.</p></div>
+
+        <h4>Opción por comando (Terminal de aaPanel o SSH)</h4>
         <pre><code>docker compose up -d --build</code></pre>
 
         <h3>4. Crear los sitios en aaPanel</h3>

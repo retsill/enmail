@@ -10,3 +10,4 @@ src/generated/prisma
 apps/api/uploads
 mysql-data
 *.tsbuildinfo
+.DS_Store
