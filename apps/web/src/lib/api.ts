@@ -190,7 +190,7 @@ export const api = {
         `/mail-accounts/${accountId}/folders/${folderId}/messages?page=${page}&pageSize=${pageSize}${category ? `&category=${category}` : ""}`,
       ),
     body: (accountId: string, folderId: string, uid: number) =>
-      request<{ text?: string; html?: string; attachments?: MailAttachment[] }>(
+      request<{ text?: string; html?: string; to?: string; cc?: string; attachments?: MailAttachment[] }>(
         `/mail-accounts/${accountId}/folders/${folderId}/messages/${uid}/body`,
       ),
     downloadAttachment: (accountId: string, folderId: string, uid: number, attachment: MailAttachment) =>

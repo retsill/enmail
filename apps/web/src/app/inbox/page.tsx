@@ -113,8 +113,18 @@ export default function InboxPage() {
   // en el message) — hay que guardarlos para poder pedir los adjuntos más
   // tarde, cuando ya no se tiene ese folderId a mano en el resto del JSX.
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  // Panel plegable con de/para/cc/fecha/asunto (estilo Gmail) — se cierra
+  // solo al abrir un mensaje distinto, no tiene sentido dejarlo abierto
+  // mostrando los datos del correo anterior.
+  const [showMessageDetails, setShowMessageDetails] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bodyData, setBodyData] = useState<{ text?: string; html?: string; attachments?: MailAttachment[] } | null>(
+  const [bodyData, setBodyData] = useState<{
+    text?: string;
+    html?: string;
+    to?: string;
+    cc?: string;
+    attachments?: MailAttachment[];
+  } | null>(
     null,
   );
   const [bodyError, setBodyError] = useState<string | null>(null);
@@ -488,6 +498,7 @@ export default function InboxPage() {
     setBodyData(null);
     setBodyError(null);
     setThreadReply(null);
+    setShowMessageDetails(false);
     if (!message.isRead) {
       api.mail
         .setFlags(accountId, message.id, { isRead: true })
@@ -754,9 +765,70 @@ export default function InboxPage() {
     });
   }
 
+  // "Imprimir" y "Abrir en ventana externa" comparten la misma idea: una
+  // ventana nueva con SOLO el mensaje (sin sidebar/header de la app), como
+  // hace Gmail — para imprimir simplemente se le pide imprimirse sola apenas
+  // termina de cargar.
+  function openMessageInWindow(message: MailMessage, autoPrint: boolean) {
+    const win = window.open("", "_blank", "width=820,height=920");
+    if (!win) return;
+    const from = message.fromName
+      ? `${escapeHtml(message.fromName)} &lt;${escapeHtml(message.fromAddress ?? "")}&gt;`
+      : escapeHtml(message.fromAddress ?? t("list.unknownSender"));
+    const dateText = message.receivedAt ? formatMessageDate(message.receivedAt, locale) : "";
+    const content =
+      bodyData?.html ?? (bodyData?.text ? `<pre style="white-space:pre-wrap">${escapeHtml(bodyData.text)}</pre>` : "");
+    win.document.write(`<!doctype html>
+<html><head><meta charset="utf-8" />
+<title>${escapeHtml(message.subject || t("list.noSubject"))}</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Roboto, sans-serif; max-width: 760px; margin: 32px auto; padding: 0 16px; color: #1f1f1f; }
+  h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+  .meta { color: #5f6368; font-size: 13px; margin-bottom: 20px; }
+  hr { border: none; border-top: 1px solid #e3e6ea; margin-bottom: 20px; }
+  img { max-width: 100%; }
+</style>
+</head><body>
+<h1>${escapeHtml(message.subject || t("list.noSubject"))}</h1>
+<p class="meta">${from}${dateText ? ` — ${escapeHtml(dateText)}` : ""}</p>
+<hr />
+${content}
+</body></html>`);
+    win.document.close();
+    if (autoPrint) {
+      win.addEventListener("load", () => win.print());
+    }
+  }
+
   const activeFolder = activeAccountId
     ? (foldersByAccount[activeAccountId] ?? []).find((f) => f.id === activeFolderId)
     : null;
+
+  // El folder donde vive selectedMessage no es necesariamente activeFolder
+  // (en Todos los correos/Destacados cada mensaje puede ser de una carpeta
+  // distinta) — se resuelve por separado para el badge del asunto.
+  const selectedMessageFolder =
+    selectedMessage && selectedFolderId
+      ? (foldersByAccount[currentAccountIdFor(selectedMessage)] ?? []).find((f) => f.id === selectedFolderId)
+      : null;
+
+  // "para mí" solo cuando el único destinatario es la cuenta con la que se
+  // está viendo el mensaje — con más de un destinatario (o uno distinto) se
+  // muestra la lista real en vez de asumir.
+  const selectedAccountEmail = selectedMessage
+    ? accounts.find((a) => a.id === currentAccountIdFor(selectedMessage))?.emailAddress
+    : undefined;
+  const toPreviewText =
+    bodyData?.to && selectedAccountEmail && !bodyData.to.includes(",") && bodyData.to.toLowerCase().includes(selectedAccountEmail.toLowerCase())
+      ? t("reader.toMe")
+      : (bodyData?.to ?? "");
+
+  async function toggleStarInReader() {
+    if (!selectedMessage) return;
+    const message = selectedMessage;
+    setSelectedMessage({ ...message, isFlagged: !message.isFlagged });
+    await toggleFlag(message);
+  }
   const showCategoryTabs = viewMode === UNIFIED || activeFolder?.specialUse === "\\Inbox";
 
   // Una categoría que el usuario desactivó en Ajustes > Temas no tiene tab
@@ -1438,12 +1510,17 @@ export default function InboxPage() {
           ) : null}
 
           {showCompose && composeStyle === "FULLSCREEN" ? null : selectedMessage ? (
-            <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-3 sm:p-6">
-              {/* overflow-x-auto: red de seguridad para que en un teléfono
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
+              {/* sticky: antes esta fila se iba de la vista al hacer scroll
+                  en un correo largo — en Gmail las acciones quedan siempre
+                  a mano arriba, sin tener que volver a subir para archivar,
+                  responder, etc.
+                  overflow-x-auto: red de seguridad para que en un teléfono
                   angosto (320-360px) esta fila de 7 acciones nunca se corte
                   ni desborde la pantalla — se puede deslizar en vez de romper
                   el layout. */}
-              <div className="mb-4 flex items-center gap-0.5 overflow-x-auto sm:gap-1">
+              <div className="sticky top-0 z-10 flex items-center gap-0.5 overflow-x-auto border-b border-border bg-surface px-3 py-2 sm:gap-1 sm:px-6">
                 <button
                   onClick={() => setSelectedMessage(null)}
                   className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-hover"
@@ -1529,18 +1606,104 @@ export default function InboxPage() {
                 </ToolbarIconButton>
               </div>
 
-              <h1 className="mb-3 text-xl font-normal">{selectedMessage.subject || t("list.noSubject")}</h1>
-              <div className="mb-6 flex items-center gap-3 border-b border-border pb-4">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-sm font-medium text-accent">
-                  {(selectedMessage.fromName || selectedMessage.fromAddress || "?").charAt(0).toUpperCase()}
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium">
-                    {selectedMessage.fromName || selectedMessage.fromAddress || t("list.unknownSender")}
-                  </p>
-                  <p className="text-muted-foreground">{selectedMessage.fromAddress}</p>
+              <div className="p-3 sm:p-6">
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <h1 className="text-xl font-normal">{selectedMessage.subject || t("list.noSubject")}</h1>
+                {selectedMessageFolder ? (
+                  <span className="rounded-full bg-surface-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                    {folderDisplayName(selectedMessageFolder, t)}
+                  </span>
+                ) : null}
+                <div className="ml-auto flex shrink-0 items-center gap-0.5">
+                  <MetaIconButton title={t("reader.print")} onClick={() => openMessageInWindow(selectedMessage, true)}>
+                    <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+                  </MetaIconButton>
+                  <MetaIconButton
+                    title={t("reader.openExternal")}
+                    onClick={() => openMessageInWindow(selectedMessage, false)}
+                  >
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3" />
+                  </MetaIconButton>
                 </div>
               </div>
+
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-2 border-b border-border pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-sm font-medium text-accent">
+                    {(selectedMessage.fromName || selectedMessage.fromAddress || "?").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="text-sm">
+                    <p className="font-medium">
+                      {selectedMessage.fromName || selectedMessage.fromAddress || t("list.unknownSender")}
+                    </p>
+                    {toPreviewText ? (
+                      <button
+                        onClick={() => setShowMessageDetails((v) => !v)}
+                        className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        {toPreviewText}
+                        <svg
+                          width="11"
+                          height="11"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          className={`transition-transform ${showMessageDetails ? "rotate-180" : ""}`}
+                        >
+                          <path d="m6 9 6 6 6-6" />
+                        </svg>
+                      </button>
+                    ) : (
+                      <p className="text-muted-foreground">{selectedMessage.fromAddress}</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  {selectedMessage.receivedAt ? (
+                    <span className="mr-1 text-xs text-muted-foreground">
+                      {formatMessageDate(selectedMessage.receivedAt, locale)}
+                    </span>
+                  ) : null}
+                  <MetaIconButton
+                    title={selectedMessage.isFlagged ? t("list.unflag") : t("reader.star")}
+                    onClick={toggleStarInReader}
+                  >
+                    <path
+                      d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01Z"
+                      fill={selectedMessage.isFlagged ? "currentColor" : "none"}
+                    />
+                  </MetaIconButton>
+                  <MetaIconButton title={t("reader.reply")} onClick={() => openReply(selectedMessage, false)}>
+                    <path d="M9 17H4v-5l9-9 5 5-9 9Z" />
+                  </MetaIconButton>
+                </div>
+              </div>
+
+              {showMessageDetails ? (
+                <div className="-mt-1 mb-6 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 rounded-lg border border-border bg-surface-muted/50 p-3 text-xs">
+                  <span className="text-muted-foreground">{t("reader.details.from")}</span>
+                  <span className="break-words">
+                    {selectedMessage.fromName ? `${selectedMessage.fromName} ` : ""}
+                    {selectedMessage.fromAddress ? `<${selectedMessage.fromAddress}>` : ""}
+                  </span>
+                  <span className="text-muted-foreground">{t("reader.details.to")}</span>
+                  <span className="break-words">{bodyData?.to ?? "—"}</span>
+                  {bodyData?.cc ? (
+                    <>
+                      <span className="text-muted-foreground">{t("reader.details.cc")}</span>
+                      <span className="break-words">{bodyData.cc}</span>
+                    </>
+                  ) : null}
+                  <span className="text-muted-foreground">{t("reader.details.date")}</span>
+                  <span>
+                    {selectedMessage.receivedAt ? formatMessageDate(selectedMessage.receivedAt, locale) : "—"}
+                  </span>
+                  <span className="text-muted-foreground">{t("reader.details.subject")}</span>
+                  <span className="break-words">{selectedMessage.subject || t("list.noSubject")}</span>
+                </div>
+              ) : null}
+
               {bodyError ? (
                 <p className="text-sm text-danger">{bodyError}</p>
               ) : bodyData ? (
@@ -1597,6 +1760,8 @@ export default function InboxPage() {
                   />
                 </div>
               ) : null}
+              </div>
+            </div>
             </div>
           ) : effectiveColumns === 3 || effectiveColumns === 4 ? (
             <div className="flex-1" />
@@ -1813,6 +1978,32 @@ function ToolbarIconButton({
       className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-surface-hover sm:h-9 sm:w-9"
     >
       <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {children}
+      </svg>
+    </button>
+  );
+}
+
+// Versión chica de ToolbarIconButton, para los íconos junto al asunto
+// (imprimir/ventana externa) y junto al remitente (destacar/responder) —
+// más compactos, al estilo de los controles secundarios de Gmail.
+function MetaIconButton({
+  children,
+  onClick,
+  title,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  title: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-hover"
+    >
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         {children}
       </svg>
     </button>

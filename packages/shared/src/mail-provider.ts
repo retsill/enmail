@@ -53,6 +53,8 @@ export interface MailAttachmentMeta {
 export interface MailMessageBody {
   text?: string;
   html?: string;
+  to?: string;
+  cc?: string;
   attachments?: MailAttachmentMeta[];
 }
 

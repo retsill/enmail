@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { ImapFlow, type ListResponse } from 'imapflow';
 import { createTransport, type Transporter } from 'nodemailer';
-import { simpleParser } from 'mailparser';
+import { simpleParser, type AddressObject } from 'mailparser';
 import type {
   FetchMessagesOptions,
   MailAttachmentContent,
@@ -12,6 +12,15 @@ import type {
   MailProviderCredentials,
   SendMailInput,
 } from '@webmail/shared';
+
+// mailparser puede devolver un solo AddressObject o una lista (mensajes con
+// más de un header To/Cc, poco común pero válido) — se aplana a un string
+// legible ("Nombre <mail>, Nombre2 <mail2>") en los dos casos.
+function addressText(addr: AddressObject | AddressObject[] | undefined): string | undefined {
+  if (!addr) return undefined;
+  if (Array.isArray(addr)) return addr.map((a) => a.text).join(', ');
+  return addr.text;
+}
 
 // Implementación del core: IMAP/SMTP contra el servidor de correo propio del
 // cliente. Cada instancia representa la conexión de UNA MailAccount — no es
@@ -216,6 +225,8 @@ export class ImapMailProvider implements MailProviderAdapter {
     return {
       text: parsed.text,
       html: typeof parsed.html === 'string' ? parsed.html : undefined,
+      to: addressText(parsed.to),
+      cc: addressText(parsed.cc),
       attachments: parsed.attachments.map((att, index) => ({
         index,
         filename: att.filename ?? `adjunto-${index + 1}`,
