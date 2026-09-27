@@ -29,6 +29,26 @@ export interface ComposeInitial {
   // mensaje nuevo), acá va su id — al enviar o al volver a guardar como
   // borrador se descarta esta copia vieja en vez de dejarla duplicada.
   draftMessageId?: string;
+  // Reenviar: el correo original completo, que SÍ tiene que llegarle al
+  // destinatario, pero sin mostrarse ni ocupar lugar en el editor (a
+  // diferencia de Responder, que no arrastra nada del mensaje anterior).
+  // Se "cose" al final recién al enviar/guardar — nunca entra al DOM
+  // editable — y por eso viaja aparte de `html` en vez de venir ya
+  // incluido ahí.
+  hiddenTailHtml?: string;
+}
+
+// Separa `html + MARCADOR + hiddenTail` en un envío/borrador ya guardado —
+// para poder reabrir un borrador de reenvío sin que la parte oculta
+// reaparezca de golpe en el editor. Nunca llega al DOM (ver sanitizeHtml
+// en SimpleRichEditor, que además tira comentarios HTML igual que cualquier
+// otra etiqueta no permitida).
+const HIDDEN_TAIL_MARKER = "<!--enmail:hidden-tail-->";
+
+export function splitHiddenTail(rawHtml: string): { html: string; hiddenTailHtml?: string } {
+  const idx = rawHtml.indexOf(HIDDEN_TAIL_MARKER);
+  if (idx < 0) return { html: rawHtml };
+  return { html: rawHtml.slice(0, idx), hiddenTailHtml: rawHtml.slice(idx + HIDDEN_TAIL_MARKER.length) };
 }
 
 // Anchos usados para acomodar varias ventanas de "popup" lado a lado (deben
@@ -98,6 +118,10 @@ export function ComposeDialog({
   const [html, setHtml] = useState(
     initial?.html ? initial.html : signature ? `<p></p>${signature}` : "",
   );
+  // Nunca se muestra ni se edita — solo se pega al final del HTML real que
+  // se manda (send o saveDraft), separado por HIDDEN_TAIL_MARKER para poder
+  // reabrir el mismo borrador después sin que aparezca en el editor.
+  const hiddenTail = initial?.hiddenTailHtml ?? "";
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -161,6 +185,10 @@ export function ComposeDialog({
     editorRef.current?.insertText(emoji);
   }
 
+  function withHiddenTail(visibleHtml: string): string {
+    return hiddenTail ? `${visibleHtml}${HIDDEN_TAIL_MARKER}${hiddenTail}` : visibleHtml;
+  }
+
   // Cerrar sin enviar: si el usuario escribió algo real (destinatario,
   // asunto, o tocó el cuerpo respecto a como arrancó), se guarda como
   // borrador en la carpeta Drafts de la cuenta antes de cerrar — igual que
@@ -180,7 +208,7 @@ export function ComposeDialog({
           cc: cc.length ? cc : undefined,
           bcc: bcc.length ? bcc : undefined,
           subject: subject || undefined,
-          html: currentHtml || undefined,
+          html: currentHtml ? withHiddenTail(currentHtml) : undefined,
         });
         // Esto acaba de guardar una copia NUEVA del borrador — si veníamos
         // editando uno ya existente, la vieja queda duplicada en Drafts si
@@ -211,7 +239,7 @@ export function ComposeDialog({
         cc: cc.length ? cc : undefined,
         bcc: bcc.length ? bcc : undefined,
         subject,
-        html,
+        html: withHiddenTail(editorRef.current?.getHTML() ?? html),
         inReplyTo: initial?.inReplyTo,
         references: initial?.inReplyTo,
         attachments,

@@ -19,6 +19,7 @@ import {
   type ComposeInitial,
   COMPOSE_POPUP_WIDTH,
   COMPOSE_POPUP_MINIMIZED_WIDTH,
+  splitHiddenTail,
 } from "@/components/compose-dialog";
 import { MoveToMenu } from "@/components/move-to-menu";
 import { SelectAllMenu } from "@/components/select-all-menu";
@@ -559,12 +560,18 @@ export default function InboxPage() {
   async function openDraftForEditing(message: MailMessage, accountId: string, folderId: string) {
     try {
       const body = await api.mail.body(accountId, folderId, message.uid);
+      const rawHtml = body.html ?? (body.text ? `<p>${escapeHtml(body.text).replace(/\n/g, "<br>")}</p>` : "");
+      // Un borrador de un reenvío guardado tiene el original "cosido" al
+      // final (invisible en el editor) — separarlo de nuevo acá evita que
+      // reaparezca en el editor al seguir editando el borrador.
+      const { html, hiddenTailHtml } = splitHiddenTail(rawHtml);
       openComposeWindow(accountId, {
         toList: body.toAddresses,
         ccList: body.ccAddresses,
         bccList: body.bccAddresses,
         subject: message.subject ?? undefined,
-        html: body.html ?? (body.text ? `<p>${escapeHtml(body.text).replace(/\n/g, "<br>")}</p>` : ""),
+        html,
+        hiddenTailHtml,
         draftMessageId: message.id,
       });
     } catch (err) {
@@ -790,21 +797,20 @@ export default function InboxPage() {
   function openReply(message: MailMessage, forward: boolean) {
     setShowOriginalWhileReplying(false);
     const account = accounts.find((a) => a.id === (activeAccountId ?? currentAccountIdFor(message)));
-    const quotedContent = bodyData?.html
-      ? bodyData.html
-      : bodyData?.text
-        ? `<p>${escapeHtml(bodyData.text).replace(/\n/g, "<br>")}</p>`
-        : "";
-    // Igual que Gmail: el mensaje citado arranca oculto detrás de un botón
-    // "⋯" en vez de mostrarse desplegado de una — contenteditable="false"
-    // en el botón para que no se pueda escribir "dentro" de él sin querer.
-    const quoted = quotedContent
-      ? `<span class="quote-toggle" contenteditable="false" onclick="this.nextElementSibling.classList.add('expanded');this.style.display='none';">⋯</span><blockquote class="quoted-content">${quotedContent}</blockquote>`
-      : "";
+    // El mensaje original ya se ve arriba del editor (colapsado, con opción
+    // de expandirlo ahí mismo) — el editor en sí arranca limpio, solo la
+    // firma si hay. Reenviar es la única excepción real: el destinatario sí
+    // tiene que recibir el correo original completo, pero eso viaja aparte
+    // (hiddenTailHtml) y nunca entra al DOM editable — Responder no lleva
+    // nada del mensaje anterior, ni siquiera oculto.
+    const hiddenTailHtml = forward
+      ? (bodyData?.html ?? (bodyData?.text ? `<p>${escapeHtml(bodyData.text).replace(/\n/g, "<br>")}</p>` : undefined))
+      : undefined;
     setThreadReply({
       to: forward ? "" : message.fromAddress ?? "",
       subject: `${forward ? "Fwd: " : "Re: "}${message.subject ?? ""}`,
-      html: `<p></p>${account?.signature ? account.signature : ""}${quoted}`,
+      html: `<p></p>${account?.signature ? account.signature : ""}`,
+      hiddenTailHtml,
       inReplyTo: forward ? undefined : (message.messageId ?? undefined),
     });
   }
