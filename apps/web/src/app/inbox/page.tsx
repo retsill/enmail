@@ -499,6 +499,14 @@ export default function InboxPage() {
     setBodyError(null);
     setThreadReply(null);
     setShowMessageDetails(false);
+    // Para el badge de carpeta en el header del lector: en Todos los
+    // correos/Destacados se puede abrir un mensaje de una cuenta cuyas
+    // carpetas nunca se cargaron (solo se cargan al expandirla en el
+    // sidebar) — sin esto, foldersByAccount queda vacío y el badge no
+    // tiene de dónde sacar el nombre.
+    if (!foldersByAccount[accountId]) {
+      loadFolders(accountId).catch(() => undefined);
+    }
     if (!message.isRead) {
       api.mail
         .setFlags(accountId, message.id, { isRead: true })
