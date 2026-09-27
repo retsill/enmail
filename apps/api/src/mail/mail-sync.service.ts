@@ -1,4 +1,5 @@
 import { BadGatewayException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ZipArchive } from 'archiver';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { Prisma } from '../generated/prisma/client.js';
 import { MailAccountsService } from '../mail-accounts/mail-accounts.service.js';
@@ -529,6 +530,62 @@ export class MailSyncService {
     } finally {
       await provider.disconnect();
     }
+  }
+
+  async fetchAttachment(
+    userId: string,
+    mailAccountId: string,
+    folderPath: string,
+    uid: number,
+    index: number,
+  ) {
+    const { provider } = await this.buildProvider(userId, mailAccountId);
+    try {
+      const attachments = await provider.fetchAttachments(folderPath, uid);
+      const attachment = attachments[index];
+      if (!attachment) throw new NotFoundException('Adjunto no encontrado');
+      return attachment;
+    } finally {
+      await provider.disconnect();
+    }
+  }
+
+  async fetchAttachmentsZip(userId: string, mailAccountId: string, folderPath: string, uid: number) {
+    const { provider } = await this.buildProvider(userId, mailAccountId);
+    let attachments;
+    try {
+      attachments = await provider.fetchAttachments(folderPath, uid);
+    } finally {
+      await provider.disconnect();
+    }
+    if (attachments.length === 0) throw new NotFoundException('El mensaje no tiene adjuntos');
+
+    const archive = new ZipArchive({ zlib: { level: 9 } });
+    const chunks: Buffer[] = [];
+    archive.on('data', (chunk: Buffer) => chunks.push(chunk));
+    // Nombres repetidos (ej. dos "imagen.png" en el mismo correo) pisarían
+    // una entrada del zip a la otra — se numeran para que ninguna se pierda.
+    const usedNames = new Set<string>();
+    for (const attachment of attachments) {
+      let name = attachment.filename;
+      let suffix = 1;
+      while (usedNames.has(name)) {
+        const dot = attachment.filename.lastIndexOf('.');
+        name =
+          dot > 0
+            ? `${attachment.filename.slice(0, dot)} (${suffix})${attachment.filename.slice(dot)}`
+            : `${attachment.filename} (${suffix})`;
+        suffix += 1;
+      }
+      usedNames.add(name);
+      archive.append(attachment.content, { name });
+    }
+    const done = new Promise<Buffer>((resolve, reject) => {
+      archive.on('end', () => resolve(Buffer.concat(chunks)));
+      archive.on('error', reject);
+    });
+    await archive.finalize();
+    return done;
   }
 
   async getQuota(userId: string, mailAccountId: string) {

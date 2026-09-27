@@ -4,12 +4,17 @@ import { useCallback, useEffect, useState } from "react";
 import { api, ApiError, type Contact } from "@/lib/api";
 import { useLocale } from "@/i18n/context";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { MobileAppSwitcher } from "@/components/app-rail";
+import { useInboxView } from "@/app/inbox/view-context";
+import { useIsMobile } from "@/lib/use-is-mobile";
 
 // Vista de Contactos: ocupa el mismo espacio que el sidebar de carpetas +
 // panel de lectura (lista buscable a la izquierda, detalle/edición a la
 // derecha), siguiendo el mismo patrón de dos columnas que el correo.
 export function ContactsApp({ sidebarCollapsed }: { sidebarCollapsed: boolean }) {
   const { t } = useLocale();
+  const { toggleSidebar, closeSidebar } = useInboxView();
+  const isMobile = useIsMobile();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -83,7 +88,17 @@ export function ContactsApp({ sidebarCollapsed }: { sidebarCollapsed: boolean })
   return (
     <div className="flex min-w-0 flex-1">
       {!sidebarCollapsed ? (
-        <aside className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto border-r border-border bg-background px-3 py-4">
+        <>
+        {/* Mismo patrón que el sidebar de correo: en mobile flota encima
+            (drawer) en vez de compartir el ancho con el panel de detalle. */}
+        <div className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={toggleSidebar} />
+        <aside
+          onClick={(e) => {
+            if (isMobile && (e.target as HTMLElement).closest("button")) closeSidebar();
+          }}
+          className="fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col gap-3 overflow-y-auto bg-background px-3 py-4 shadow-2xl md:static md:z-auto md:border-r md:border-border md:shadow-none"
+        >
+          <MobileAppSwitcher />
           <button
             onClick={startCreate}
             className="flex items-center gap-3 self-start rounded-2xl bg-accent-soft px-6 py-4 text-sm font-medium text-foreground shadow-sm transition hover:shadow-md"
@@ -129,6 +144,7 @@ export function ContactsApp({ sidebarCollapsed }: { sidebarCollapsed: boolean })
             )}
           </div>
         </aside>
+        </>
       ) : null}
 
       <main className="flex min-w-0 flex-1 flex-col bg-surface p-6">

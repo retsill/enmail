@@ -97,6 +97,8 @@ export const dictionaries = {
     "reader.archive": "Archivar",
     "reader.spam": "Spam",
     "reader.markUnread": "No leído",
+    "reader.attachments": "Adjuntos",
+    "reader.downloadAllZip": "Descargar todo (.zip)",
 
     "compose.to": "Para",
     "compose.subject": "Asunto",
@@ -356,6 +358,8 @@ export const dictionaries = {
     "reader.archive": "Archive",
     "reader.spam": "Spam",
     "reader.markUnread": "Unread",
+    "reader.attachments": "Attachments",
+    "reader.downloadAllZip": "Download all (.zip)",
 
     "compose.to": "To",
     "compose.subject": "Subject",

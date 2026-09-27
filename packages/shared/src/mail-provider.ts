@@ -43,9 +43,23 @@ export interface MailMessageDTO {
   sizeBytes?: number;
 }
 
+export interface MailAttachmentMeta {
+  index: number;
+  filename: string;
+  contentType: string;
+  size: number;
+}
+
 export interface MailMessageBody {
   text?: string;
   html?: string;
+  attachments?: MailAttachmentMeta[];
+}
+
+export interface MailAttachmentContent {
+  filename: string;
+  contentType: string;
+  content: Buffer;
 }
 
 export interface SendMailInput {
@@ -79,6 +93,7 @@ export interface MailProviderAdapter {
 
   fetchMessages(options: FetchMessagesOptions): Promise<MailMessageDTO[]>;
   fetchMessageBody(folderPath: string, uid: number): Promise<MailMessageBody>;
+  fetchAttachments(folderPath: string, uid: number): Promise<MailAttachmentContent[]>;
 
   send(input: SendMailInput): Promise<{ messageId: string }>;
 }

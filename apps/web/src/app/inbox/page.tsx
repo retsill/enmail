@@ -7,6 +7,7 @@ import {
   ApiError,
   type Addon,
   type MailAccount,
+  type MailAttachment,
   type MailFolder,
   type MailMessage,
   type UnifiedMessage,
@@ -30,7 +31,7 @@ import { FolderColorPicker } from "@/components/folder-color-picker";
 import { folderDisplayName } from "@/lib/folder-display";
 import { formatMessageDate } from "@/lib/format-date";
 import { useLocale } from "@/i18n/context";
-import { AppRail } from "@/components/app-rail";
+import { AppRail, MobileAppSwitcher } from "@/components/app-rail";
 import { ContactsApp } from "@/components/contacts-app";
 import { CategoryIcon } from "@/components/category-icon";
 import { useInboxSearch } from "./search-context";
@@ -42,6 +43,12 @@ const STARRED = "__starred__";
 
 function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function formatAttachmentSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export default function InboxPage() {
@@ -102,8 +109,14 @@ export default function InboxPage() {
   const [unifiedMessages, setUnifiedMessages] = useState<UnifiedMessage[]>([]);
   const [starredMessages, setStarredMessages] = useState<UnifiedMessage[]>([]);
   const [selectedMessage, setSelectedMessage] = useState<MailMessage | null>(null);
+  // openMessage recibe accountId/folderId como argumentos sueltos (no vienen
+  // en el message) — hay que guardarlos para poder pedir los adjuntos más
+  // tarde, cuando ya no se tiene ese folderId a mano en el resto del JSX.
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bodyData, setBodyData] = useState<{ text?: string; html?: string } | null>(null);
+  const [bodyData, setBodyData] = useState<{ text?: string; html?: string; attachments?: MailAttachment[] } | null>(
+    null,
+  );
   const [bodyError, setBodyError] = useState<string | null>(null);
 
   const [showAddAccount, setShowAddAccount] = useState(false);
@@ -471,6 +484,7 @@ export default function InboxPage() {
 
   async function openMessage(message: MailMessage, accountId: string, folderId: string) {
     setSelectedMessage(message);
+    setSelectedFolderId(folderId);
     setBodyData(null);
     setBodyError(null);
     setThreadReply(null);
@@ -870,6 +884,7 @@ export default function InboxPage() {
         }}
         className="fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col gap-3 overflow-y-auto bg-background px-3 py-4 shadow-2xl md:static md:z-auto md:shadow-none"
       >
+        <MobileAppSwitcher />
         <button
           onClick={() => {
             if (currentComposeAccountId) openComposeWindow(currentComposeAccountId);
@@ -1519,7 +1534,17 @@ export default function InboxPage() {
               {bodyError ? (
                 <p className="text-sm text-danger">{bodyError}</p>
               ) : bodyData ? (
-                <EmailBody html={bodyData.html} text={bodyData.text} />
+                <>
+                  <EmailBody html={bodyData.html} text={bodyData.text} />
+                  {bodyData.attachments && bodyData.attachments.length > 0 && selectedFolderId ? (
+                    <AttachmentsList
+                      attachments={bodyData.attachments}
+                      accountId={currentAccountIdFor(selectedMessage)}
+                      folderId={selectedFolderId}
+                      uid={selectedMessage.uid}
+                    />
+                  ) : null}
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("reader.loading")}</p>
               )}
@@ -1667,6 +1692,97 @@ export default function InboxPage() {
       ) : null}
 
       {bulkProgress ? <ProgressDialog message={bulkProgress} /> : null}
+    </div>
+  );
+}
+
+function AttachmentsList({
+  attachments,
+  accountId,
+  folderId,
+  uid,
+}: {
+  attachments: MailAttachment[];
+  accountId: string;
+  folderId: string;
+  uid: number;
+}) {
+  const { t } = useLocale();
+  const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
+  const [downloadingZip, setDownloadingZip] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleDownload(attachment: MailAttachment) {
+    setError(null);
+    setDownloadingIndex(attachment.index);
+    try {
+      await api.mail.downloadAttachment(accountId, folderId, uid, attachment);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error");
+    } finally {
+      setDownloadingIndex(null);
+    }
+  }
+
+  async function handleDownloadAll() {
+    setError(null);
+    setDownloadingZip(true);
+    try {
+      await api.mail.downloadAllAttachments(accountId, folderId, uid);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error");
+    } finally {
+      setDownloadingZip(false);
+    }
+  }
+
+  if (attachments.length === 0) return null;
+
+  return (
+    <div className="mt-6 border-t border-border pt-4">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="text-xs font-medium text-muted-foreground">
+          {t("reader.attachments")} ({attachments.length})
+        </p>
+        {attachments.length > 1 ? (
+          <button
+            type="button"
+            onClick={handleDownloadAll}
+            disabled={downloadingZip}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-surface-hover disabled:opacity-60"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            {downloadingZip ? "…" : t("reader.downloadAllZip")}
+          </button>
+        ) : null}
+      </div>
+      {error ? <p className="mb-2 text-xs text-danger">{error}</p> : null}
+      <div className="flex flex-wrap gap-2">
+        {attachments.map((att) => (
+          <button
+            type="button"
+            key={att.index}
+            onClick={() => handleDownload(att)}
+            disabled={downloadingIndex === att.index}
+            title={att.filename}
+            className="flex max-w-52 items-center gap-2 rounded-xl border border-border px-3 py-2 text-left text-sm hover:bg-surface-hover disabled:opacity-60"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent-soft text-accent">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M21.44 11.05 12.25 20.24a5 5 0 0 1-7.07-7.07l9.19-9.19a3.5 3.5 0 0 1 4.95 4.95l-9.19 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+              </svg>
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate font-medium">
+                {downloadingIndex === att.index ? "…" : att.filename}
+              </span>
+              <span className="block text-xs text-muted-foreground">{formatAttachmentSize(att.size)}</span>
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { createTransport, type Transporter } from 'nodemailer';
 import { simpleParser } from 'mailparser';
 import type {
   FetchMessagesOptions,
+  MailAttachmentContent,
   MailFolderDTO,
   MailMessageBody,
   MailMessageDTO,
@@ -194,7 +195,10 @@ export class ImapMailProvider implements MailProviderAdapter {
     return Array.isArray(result) ? result : [];
   }
 
-  async fetchMessageBody(folderPath: string, uid: number): Promise<MailMessageBody> {
+  // Descarga y parsea el mensaje crudo — usado tanto para el cuerpo (texto y
+  // adjuntos ya vienen juntos en el mismo parseo de mailparser) como para
+  // bajar el contenido real de un adjunto puntual.
+  private async downloadAndParse(folderPath: string, uid: number) {
     const client = this.ensureConnected();
     await client.mailboxOpen(folderPath);
 
@@ -204,11 +208,30 @@ export class ImapMailProvider implements MailProviderAdapter {
       chunks.push(chunk as Buffer);
     }
 
-    const parsed = await simpleParser(Buffer.concat(chunks));
+    return simpleParser(Buffer.concat(chunks));
+  }
+
+  async fetchMessageBody(folderPath: string, uid: number): Promise<MailMessageBody> {
+    const parsed = await this.downloadAndParse(folderPath, uid);
     return {
       text: parsed.text,
       html: typeof parsed.html === 'string' ? parsed.html : undefined,
+      attachments: parsed.attachments.map((att, index) => ({
+        index,
+        filename: att.filename ?? `adjunto-${index + 1}`,
+        contentType: att.contentType,
+        size: att.size,
+      })),
     };
+  }
+
+  async fetchAttachments(folderPath: string, uid: number): Promise<MailAttachmentContent[]> {
+    const parsed = await this.downloadAndParse(folderPath, uid);
+    return parsed.attachments.map((att, index) => ({
+      filename: att.filename ?? `adjunto-${index + 1}`,
+      contentType: att.contentType ?? 'application/octet-stream',
+      content: att.content,
+    }));
   }
 
   // Cuota real del buzón que asignó el hosting (RFC 2087 / extensión QUOTA

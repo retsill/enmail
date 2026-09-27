@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  StreamableFile,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -23,6 +24,15 @@ import { MailSyncService } from './mail-sync.service.js';
 import { BulkUpdateFlagsDto, UpdateFlagsDto } from './dto/update-flags.dto.js';
 import { BulkMoveMessagesDto, MoveMessageDto } from './dto/move-message.dto.js';
 import { CreateFolderDto, UpdateFolderDto } from './dto/folder.dto.js';
+
+// Los nombres de archivo de adjuntos pueden traer acentos, espacios o
+// comillas — filename= a secas se rompe con esos casos en algunos
+// navegadores. filename* (RFC 5987/6266) es la forma correcta de mandar
+// UTF-8 real, con un fallback ASCII simple para los que no la soportan.
+function contentDisposition(filename: string): string {
+  const fallback = filename.replace(/[^\x20-\x7E]/g, '_').replace(/"/g, "'");
+  return `attachment; filename="${fallback}"; filename*=UTF-8''${encodeURIComponent(filename)}`;
+}
 
 @UseGuards(JwtAuthGuard)
 @Controller('mail-accounts/:mailAccountId')
@@ -118,6 +128,45 @@ export class MailController {
     await this.mailAccounts.findOwned(user.sub, mailAccountId);
     const folder = await this.prisma.mailFolder.findUniqueOrThrow({ where: { id: folderId } });
     return this.mailSync.fetchMessageBody(user.sub, mailAccountId, folder.path, Number(uid));
+  }
+
+  @Get('folders/:folderId/messages/:uid/attachments/:index')
+  async attachment(
+    @CurrentUser() user: JwtPayload,
+    @Param('mailAccountId') mailAccountId: string,
+    @Param('folderId') folderId: string,
+    @Param('uid') uid: string,
+    @Param('index') index: string,
+  ) {
+    await this.mailAccounts.findOwned(user.sub, mailAccountId);
+    const folder = await this.prisma.mailFolder.findUniqueOrThrow({ where: { id: folderId } });
+    const attachment = await this.mailSync.fetchAttachment(
+      user.sub,
+      mailAccountId,
+      folder.path,
+      Number(uid),
+      Number(index),
+    );
+    return new StreamableFile(attachment.content, {
+      type: attachment.contentType,
+      disposition: contentDisposition(attachment.filename),
+    });
+  }
+
+  @Get('folders/:folderId/messages/:uid/attachments.zip')
+  async attachmentsZip(
+    @CurrentUser() user: JwtPayload,
+    @Param('mailAccountId') mailAccountId: string,
+    @Param('folderId') folderId: string,
+    @Param('uid') uid: string,
+  ) {
+    await this.mailAccounts.findOwned(user.sub, mailAccountId);
+    const folder = await this.prisma.mailFolder.findUniqueOrThrow({ where: { id: folderId } });
+    const zip = await this.mailSync.fetchAttachmentsZip(user.sub, mailAccountId, folder.path, Number(uid));
+    return new StreamableFile(zip, {
+      type: 'application/zip',
+      disposition: contentDisposition('adjuntos.zip'),
+    });
   }
 
   @Patch('messages/:messageId/flags')
