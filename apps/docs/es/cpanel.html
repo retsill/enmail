@@ -24,6 +24,7 @@
       <h4>Empezar</h4>
       <nav>
         <a href="index.html" class="">Introducción</a>
+<a href="gallery.html" class="">Galería</a>
       </nav>
 
       <h4>Instalación</h4>
@@ -102,6 +103,32 @@ npm run build</code></pre>
     toggle.addEventListener("click", function () { sidebar.classList.toggle("open"); });
     sidebar.querySelectorAll("a").forEach(function (a) {
       a.addEventListener("click", function () { sidebar.classList.remove("open"); });
+    });
+  }
+
+  // Modal de la galería (solo existe contenido si la página tiene .gallery-item,
+  // en las demás páginas esto no hace nada).
+  var galleryModal = document.getElementById("galleryModal");
+  var galleryModalImg = document.getElementById("galleryModalImg");
+  var galleryModalClose = document.getElementById("galleryModalClose");
+  function openGalleryModal(src) {
+    galleryModalImg.src = src;
+    galleryModal.classList.add("open");
+  }
+  function closeGalleryModal() {
+    galleryModal.classList.remove("open");
+    galleryModalImg.src = "";
+  }
+  if (galleryModal) {
+    document.querySelectorAll(".gallery-item").forEach(function (btn) {
+      btn.addEventListener("click", function () { openGalleryModal(btn.getAttribute("data-full")); });
+    });
+    galleryModalClose.addEventListener("click", closeGalleryModal);
+    galleryModal.addEventListener("click", function (e) {
+      if (e.target === galleryModal) closeGalleryModal();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") closeGalleryModal();
     });
   }
 </script>

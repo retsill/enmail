@@ -23,6 +23,7 @@ import { SUPPORTED_LOCALES } from "@/i18n/dictionaries";
 import { resolveAssetUrl, useRefreshSystemSettings } from "@/lib/settings-context";
 import { useInboxView } from "../view-context";
 import { ThemesSection, SettingsCard } from "@/components/themes-section";
+import { useIsMobile } from "@/lib/use-is-mobile";
 
 type Tab = "profile" | "themes" | "branding" | "pages" | "users" | "mailServer" | "integrations";
 
@@ -91,6 +92,11 @@ export default function SystemSettingsPage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [checked, setChecked] = useState(false);
   const [tab, setTab] = useState<Tab>("profile");
+  const isMobile = useIsMobile();
+  // En mobile, Ajustes se navega como la bandeja: lista de secciones O el
+  // contenido de una, nunca las dos angostadas lado a lado — arranca en la
+  // lista y pasa al contenido recién cuando se toca una sección.
+  const [mobileShowingList, setMobileShowingList] = useState(true);
 
   useEffect(() => {
     const stored = getStoredUser();
@@ -134,11 +140,18 @@ export default function SystemSettingsPage() {
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <nav className="w-60 shrink-0 border-r border-border bg-surface px-3 py-6">
+        <nav
+          className={`w-full shrink-0 border-border bg-surface px-3 py-6 md:block md:w-60 md:border-r ${
+            isMobile && !mobileShowingList ? "hidden" : "block"
+          }`}
+        >
           {tabs.map((item) => (
             <button
               key={item.id}
-              onClick={() => setTab(item.id)}
+              onClick={() => {
+                setTab(item.id);
+                setMobileShowingList(false);
+              }}
               className={`mb-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm ${
                 tab === item.id ? "bg-accent-soft font-medium text-accent" : "text-muted-foreground hover:bg-surface-hover"
               }`}
@@ -149,7 +162,20 @@ export default function SystemSettingsPage() {
           ))}
         </nav>
 
-        <main className="flex-1 overflow-y-auto px-8 py-8">
+        <main
+          className={`flex-1 overflow-y-auto px-4 py-6 md:block md:px-8 md:py-8 ${
+            isMobile && mobileShowingList ? "hidden" : "block"
+          }`}
+        >
+          <button
+            onClick={() => setMobileShowingList(true)}
+            className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground md:hidden"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            {t("settings.title")}
+          </button>
           <div className="mx-auto max-w-2xl">
             {tab === "profile" ? <ProfileSection /> : null}
             {tab === "themes" ? <ThemesSection /> : null}

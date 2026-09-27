@@ -1,11 +1,41 @@
 // Contenido de cada página de documentación, en los dos idiomas.
 // generate.mjs arma el HTML final a partir de esto.
 
+import { readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 function callout(type, titleEs, titleEn, bodyEs, bodyEn) {
   return {
     es: `<div class="callout callout-${type}"><span class="callout-title">${titleEs}</span>${bodyEs}</div>`,
     en: `<div class="callout callout-${type}"><span class="callout-title">${titleEn}</span>${bodyEn}</div>`,
   };
+}
+
+// Lee las imágenes directo de la carpeta en vez de listarlas a mano acá —
+// agregar/sacar un archivo de assets/imgs/gallery/ alcanza para que la
+// galería se actualice sola en el próximo `node generate.mjs`.
+const GALLERY_DIR = join(__dirname, "assets", "imgs", "gallery");
+const GALLERY_IMAGES = readdirSync(GALLERY_DIR)
+  .filter((f) => /\.(png|jpe?g|webp|gif)$/i.test(f))
+  .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+function renderGallery() {
+  const items = GALLERY_IMAGES.map(
+    (file) => `
+        <button type="button" class="gallery-item" data-full="../assets/imgs/gallery/${file}">
+          <img src="../assets/imgs/gallery/${file}" alt="" loading="lazy" />
+        </button>`,
+  ).join("");
+  return `
+      <div class="gallery-grid">${items}
+      </div>
+      <div class="gallery-modal" id="galleryModal">
+        <button type="button" class="gallery-modal-close" id="galleryModalClose" aria-label="Cerrar">&times;</button>
+        <img src="" alt="" id="galleryModalImg" />
+      </div>`;
 }
 
 export const PAGES = [
@@ -127,6 +157,28 @@ export const PAGES = [
 
         <h2>License</h2>
         <p>enMail is free software, published under the MIT license. You can use, modify and redistribute it freely, including in commercial projects.</p>
+      `,
+    },
+  },
+
+  // -------------------------------------------------------------- gallery
+  {
+    slug: "gallery",
+    title: { es: "Galería", en: "Gallery" },
+    description: {
+      es: "Capturas de pantalla de enMail: escritorio y mobile.",
+      en: "Screenshots of enMail: desktop and mobile.",
+    },
+    body: {
+      es: `
+        <h1>Galería</h1>
+        <p class="lede">Capturas de enMail en uso, tanto en escritorio como en celular. Click en cualquier imagen para verla más grande.</p>
+        ${renderGallery()}
+      `,
+      en: `
+        <h1>Gallery</h1>
+        <p class="lede">Screenshots of enMail in use, both on desktop and on phone. Click any image to view it larger.</p>
+        ${renderGallery()}
       `,
     },
   },

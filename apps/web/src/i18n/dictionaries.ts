@@ -10,6 +10,9 @@ export const dictionaries = {
     "login.submit": "Iniciar sesión",
     "login.submitting": "Entrando…",
     "login.error.generic": "No se pudo iniciar sesión",
+    "login.showPassword": "Mostrar contraseña",
+    "login.hidePassword": "Ocultar contraseña",
+    "login.rememberMe": "Recordar mi cuenta",
 
     "setup.title": "Configurar tu webmail",
     "setup.subtitle": "Primera vez que se abre {siteName} — creá la cuenta de administrador y conectá tu servidor de correo.",
@@ -285,6 +288,9 @@ export const dictionaries = {
     "login.submit": "Sign in",
     "login.submitting": "Signing in…",
     "login.error.generic": "We couldn't sign you in",
+    "login.showPassword": "Show password",
+    "login.hidePassword": "Hide password",
+    "login.rememberMe": "Remember my account",
 
     "setup.title": "Set up your webmail",
     "setup.subtitle": "First time opening {siteName} — create the admin account and connect your mail server.",
