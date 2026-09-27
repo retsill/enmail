@@ -263,6 +263,18 @@ model MailServerSettings {
   // certificado real del lado del servidor de correo.
   allowInsecureTls Boolean @default(false)
 
+  // Integración opcional para poder cambiar la contraseña REAL de un buzón
+  // (cuentas authSource MAIL_SERVER) desde el propio enMail, hablando con la
+  // API del panel de hosting que administra ese buzón — en vez de depender
+  // siempre de que alguien entre al panel (cPanel/Plesk/aaPanel) a mano.
+  // Sin esto configurado, esos usuarios ven "gestioná tu password desde el
+  // panel de hosting" en Ajustes, como hasta ahora.
+  mailboxPasswordProvider         String? // 'CPANEL' | 'PLESK' | 'AAPANEL'
+  mailboxPasswordBaseUrl          String? // ej. https://panel.midominio.com:2083
+  mailboxPasswordUsername         String?
+  encryptedMailboxPasswordSecret  String? @db.Text // token API (cPanel) o password admin (Plesk/aaPanel), cifrado
+  mailboxPasswordAllowInsecureTls Boolean @default(false)
+
   updatedAt DateTime @updatedAt
 
   @@map("mail_server_settings")

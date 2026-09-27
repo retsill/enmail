@@ -65,7 +65,10 @@ export class AuthService {
     return this.issueToken(user);
   }
 
-  private async verifyImapCredentials(
+  // Público: UsersService también necesita validar la contraseña ACTUAL de
+  // una cuenta MAIL_SERVER en vivo antes de dejar que cambie la contraseña
+  // real del buzón (ver changePassword ahí).
+  async verifyImapCredentials(
     email: string,
     password: string,
     server: { imapHost: string; imapPort: number; imapTls: boolean; allowInsecureTls?: boolean },

@@ -23,6 +23,8 @@ import { UserRole } from '../generated/prisma/enums.js';
 import { SettingsService } from './settings.service.js';
 import { UpdateSystemSettingsDto } from './dto/update-system-settings.dto.js';
 import { UpdateMailServerSettingsDto } from './dto/update-mail-server-settings.dto.js';
+import { UpdateMailboxPasswordProviderDto } from './dto/update-mailbox-password-provider.dto.js';
+import { MailboxPasswordService } from '../mailbox-password/mailbox-password.service.js';
 
 const UPLOADS_DIR = join(process.cwd(), 'uploads', 'branding');
 if (!existsSync(UPLOADS_DIR)) {
@@ -33,7 +35,10 @@ const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/svg+xml',
 
 @Controller('settings')
 export class SettingsController {
-  constructor(private readonly settings: SettingsService) {}
+  constructor(
+    private readonly settings: SettingsService,
+    private readonly mailboxPassword: MailboxPasswordService,
+  ) {}
 
   // Público: la pantalla de login necesita el nombre/logo antes de autenticar.
   @Get('system')
@@ -95,6 +100,37 @@ export class SettingsController {
       smtpTls: dto.smtpTls ?? false,
       allowInsecureTls: dto.allowInsecureTls ?? false,
     });
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get('mailbox-password-provider')
+  getMailboxPasswordProviderConfig() {
+    return this.settings.getMailboxPasswordProviderConfig();
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Put('mailbox-password-provider')
+  updateMailboxPasswordProviderConfig(@Body() dto: UpdateMailboxPasswordProviderDto) {
+    return this.settings.updateMailboxPasswordProvider(dto);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Post('mailbox-password-provider/test')
+  async testMailboxPasswordProviderConfig(@Body() dto: UpdateMailboxPasswordProviderDto) {
+    await this.mailboxPassword.testConnectionFromSaved(dto);
+    return { ok: true };
+  }
+
+  // Cualquier usuario logueado (no solo admin): para que Ajustes > Perfil
+  // sepa si mostrar el formulario de cambiar password a una cuenta
+  // MAIL_SERVER, sin exponer nunca la config/clave real.
+  @UseGuards(JwtAuthGuard)
+  @Get('mailbox-password-provider/status')
+  async getMailboxPasswordProviderStatus() {
+    return { configured: await this.mailboxPassword.isConfigured() };
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

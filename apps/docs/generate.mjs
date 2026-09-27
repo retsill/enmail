@@ -35,6 +35,7 @@ const NAV = [
     items: [
       { slug: "configuration", es: "Variables de entorno", en: "Environment variables" },
       { slug: "connectors", es: "Conectores Gmail/Outlook", en: "Gmail/Outlook connectors" },
+      { slug: "mailbox-password", es: "Cambio de contraseña de buzones", en: "Mailbox password change" },
       { slug: "faq", es: "Preguntas frecuentes", en: "FAQ" },
     ],
   },

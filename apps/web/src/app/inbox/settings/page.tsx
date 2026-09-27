@@ -9,6 +9,8 @@ import {
   API_URL,
   type AddonConfig,
   type AppUser,
+  type MailboxPasswordProviderConfig,
+  type MailboxPasswordProviderType,
   type MailServerSettingsDto,
   type SitePage,
   type UserProfile,
@@ -154,7 +156,12 @@ export default function SystemSettingsPage() {
             {tab === "branding" && isAdmin ? <BrandingSection /> : null}
             {tab === "pages" && isAdmin ? <PagesSection /> : null}
             {tab === "users" && isAdmin ? <UsersSection /> : null}
-            {tab === "mailServer" && isAdmin ? <MailServerSection /> : null}
+            {tab === "mailServer" && isAdmin ? (
+              <div className="flex flex-col gap-10">
+                <MailServerSection />
+                <MailboxPasswordProviderSection />
+              </div>
+            ) : null}
             {tab === "integrations" && isAdmin ? <IntegrationsSection /> : null}
           </div>
         </main>
@@ -179,8 +186,16 @@ function ProfileSection() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSaved, setPasswordSaved] = useState<string | null>(null);
   const [changingPassword, setChangingPassword] = useState(false);
+  // Cuentas MAIL_SERVER solo pueden cambiar su password real si el admin
+  // conectó un panel de hosting compatible (ver Ajustes > Servidor de correo)
+  // — sin eso, no hay ningún lado al que mandar ese cambio.
+  const [mailboxPasswordManageable, setMailboxPasswordManageable] = useState(false);
 
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    api.settings.getMailboxPasswordProviderStatus().then((s) => setMailboxPasswordManageable(s.configured));
+  }, []);
 
   useEffect(() => {
     api.me.getProfile().then((p) => {
@@ -314,7 +329,7 @@ function ProfileSection() {
         </SettingsCard>
 
         <SettingsCard title={t("profile.changePassword")}>
-          {profile.authSource !== "LOCAL" ? (
+          {profile.authSource !== "LOCAL" && !mailboxPasswordManageable ? (
             <p className="text-xs text-muted-foreground">{t("profile.passwordManagedElsewhere")}</p>
           ) : (
             <form onSubmit={handleChangePassword} className="flex flex-col gap-3">
@@ -677,6 +692,179 @@ function MailServerSection() {
         >
           {t("settings.save")}
         </button>
+      </form>
+    </section>
+  );
+}
+
+function MailboxPasswordProviderSection() {
+  const { t } = useLocale();
+  const [config, setConfig] = useState<MailboxPasswordProviderConfig>({
+    provider: "NONE",
+    baseUrl: "",
+    username: "",
+    allowInsecureTls: false,
+    hasSecret: false,
+  });
+  const [secret, setSecret] = useState("");
+  const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [testMessage, setTestMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => {
+    api.settings.getMailboxPasswordProvider().then(setConfig);
+  }, []);
+
+  async function handleSave(event: FormEvent) {
+    event.preventDefault();
+    setError(null);
+    setTestMessage(null);
+    setSaving(true);
+    try {
+      const updated = await api.settings.updateMailboxPasswordProvider({
+        provider: config.provider,
+        baseUrl: config.baseUrl,
+        username: config.username,
+        allowInsecureTls: config.allowInsecureTls,
+        ...(secret ? { secret } : {}),
+      });
+      setConfig(updated);
+      setSecret("");
+      setSavedMessage(t("settings.saved"));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error");
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSavedMessage(null), 2500);
+    }
+  }
+
+  async function handleTest() {
+    setError(null);
+    setTestMessage(null);
+    setTesting(true);
+    try {
+      await api.settings.testMailboxPasswordProvider({
+        provider: config.provider,
+        baseUrl: config.baseUrl,
+        username: config.username,
+        allowInsecureTls: config.allowInsecureTls,
+        ...(secret ? { secret } : {}),
+      });
+      setTestMessage(t("settings.mailboxPasswordProvider.testOk"));
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error");
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  const providerOptions: { value: MailboxPasswordProviderType; label: string }[] = [
+    { value: "NONE", label: t("settings.mailboxPasswordProvider.none") },
+    { value: "CPANEL", label: "cPanel" },
+    { value: "PLESK", label: "Plesk" },
+    { value: "AAPANEL", label: "aaPanel" },
+  ];
+
+  return (
+    <section>
+      <h2 className="mb-1 text-lg font-medium">{t("settings.mailboxPasswordProvider")}</h2>
+      <p className="mb-6 text-sm text-muted-foreground">{t("settings.mailboxPasswordProvider.description")}</p>
+
+      {error ? <p className="mb-4 text-sm text-danger">{error}</p> : null}
+      {testMessage ? <p className="mb-4 text-sm text-accent">{testMessage}</p> : null}
+      <SavedBanner message={savedMessage} />
+
+      <form onSubmit={handleSave} className="flex flex-col gap-5 text-sm">
+        <label className="flex max-w-xs flex-col gap-1.5">
+          <span className="text-xs font-medium text-foreground">{t("settings.mailboxPasswordProvider.provider")}</span>
+          <select
+            value={config.provider}
+            onChange={(e) => setConfig({ ...config, provider: e.target.value as MailboxPasswordProviderType })}
+            className="input"
+          >
+            {providerOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {config.provider !== "NONE" ? (
+          <div className="grid grid-cols-2 gap-4 rounded-xl border border-border p-4">
+            <label className="col-span-2 flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-foreground">{t("settings.mailboxPasswordProvider.baseUrl")}</span>
+              <input
+                required
+                placeholder="https://host:puerto"
+                value={config.baseUrl}
+                onChange={(e) => setConfig({ ...config, baseUrl: e.target.value })}
+                className="input"
+              />
+              <span className="text-xs text-muted-foreground">
+                {t("settings.mailboxPasswordProvider.baseUrl.hint")}
+              </span>
+            </label>
+            {config.provider !== "AAPANEL" ? (
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-foreground">
+                  {t("settings.mailboxPasswordProvider.username")}
+                </span>
+                <input
+                  value={config.username}
+                  onChange={(e) => setConfig({ ...config, username: e.target.value })}
+                  className="input"
+                />
+              </label>
+            ) : null}
+            <label className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-foreground">
+                {config.provider === "CPANEL"
+                  ? t("settings.mailboxPasswordProvider.secret.token")
+                  : t("settings.mailboxPasswordProvider.secret.password")}
+              </span>
+              <input
+                type="password"
+                placeholder={config.hasSecret ? "••••••••" : ""}
+                value={secret}
+                onChange={(e) => setSecret(e.target.value)}
+                className="input"
+              />
+            </label>
+
+            <label className="col-span-2 flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={config.allowInsecureTls}
+                onChange={(e) => setConfig({ ...config, allowInsecureTls: e.target.checked })}
+              />
+              {t("settings.mailboxPasswordProvider.allowInsecureTls")}
+            </label>
+          </div>
+        ) : null}
+
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-fit rounded-full bg-accent px-5 py-2 text-sm font-medium text-accent-foreground hover:bg-accent-hover disabled:opacity-60"
+          >
+            {t("settings.save")}
+          </button>
+          {config.provider !== "NONE" ? (
+            <button
+              type="button"
+              onClick={handleTest}
+              disabled={testing || !config.baseUrl}
+              className="w-fit rounded-full border border-border px-5 py-2 text-sm hover:bg-surface-hover disabled:opacity-60"
+            >
+              {testing ? "…" : t("settings.mailboxPasswordProvider.test")}
+            </button>
+          ) : null}
+        </div>
       </form>
     </section>
   );

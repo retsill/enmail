@@ -207,6 +207,20 @@ export const dictionaries = {
     "settings.mailServer.allowInsecureTls": "Permitir certificado TLS inválido",
     "settings.mailServer.allowInsecureTls.hint":
       "Activalo solo si el login falla por un error de certificado (frecuente en hosting compartido) aunque la contraseña sea correcta. Esto reduce la seguridad de la conexión — lo ideal es corregir el certificado del servidor de correo en vez de dejarlo activo.",
+    "settings.mailboxPasswordProvider": "Cambio de contraseña de buzones",
+    "settings.mailboxPasswordProvider.description":
+      "Conectá la API de tu panel de hosting para que los usuarios con buzón real (no cuentas locales) puedan cambiar su propia contraseña desde Ajustes, sin depender de que alguien entre al panel a hacerlo. Sin esto, van a seguir viendo el aviso de gestionarlo desde el panel de hosting.",
+    "settings.mailboxPasswordProvider.none": "Ninguno (gestionar desde el panel de hosting)",
+    "settings.mailboxPasswordProvider.provider": "Panel de hosting",
+    "settings.mailboxPasswordProvider.baseUrl": "URL del panel",
+    "settings.mailboxPasswordProvider.baseUrl.hint":
+      "Con el puerto del panel, no del sitio. Ej: cPanel https://host:2083 · Plesk https://host:8443 · aaPanel https://host:puerto-del-panel.",
+    "settings.mailboxPasswordProvider.username": "Usuario",
+    "settings.mailboxPasswordProvider.secret.token": "API Token",
+    "settings.mailboxPasswordProvider.secret.password": "Contraseña de administrador",
+    "settings.mailboxPasswordProvider.allowInsecureTls": "Permitir certificado TLS inválido del panel",
+    "settings.mailboxPasswordProvider.test": "Probar conexión",
+    "settings.mailboxPasswordProvider.testOk": "Conexión exitosa.",
     "settings.integrations": "Conectores externos",
     "settings.integrations.description":
       "Registra la app OAuth de cada proveedor (Google Cloud Console, Azure Portal, etc.) para que los usuarios puedan conectar cuentas Gmail/Outlook desde el webmail.",
@@ -468,6 +482,20 @@ export const dictionaries = {
     "settings.mailServer.allowInsecureTls": "Allow invalid TLS certificate",
     "settings.mailServer.allowInsecureTls.hint":
       "Only enable this if login fails with a certificate error (common on shared hosting) even though the password is correct. This weakens connection security — fixing the mail server's certificate is the better long-term option.",
+    "settings.mailboxPasswordProvider": "Mailbox password change",
+    "settings.mailboxPasswordProvider.description":
+      "Connect your hosting panel's API so users with a real mailbox (not local accounts) can change their own password from Settings, instead of depending on someone logging into the panel to do it. Without this, they'll keep seeing the \"manage it from the hosting panel\" notice.",
+    "settings.mailboxPasswordProvider.none": "None (manage from the hosting panel)",
+    "settings.mailboxPasswordProvider.provider": "Hosting panel",
+    "settings.mailboxPasswordProvider.baseUrl": "Panel URL",
+    "settings.mailboxPasswordProvider.baseUrl.hint":
+      "With the panel's port, not the site's. E.g: cPanel https://host:2083 · Plesk https://host:8443 · aaPanel https://host:panel-port.",
+    "settings.mailboxPasswordProvider.username": "Username",
+    "settings.mailboxPasswordProvider.secret.token": "API Token",
+    "settings.mailboxPasswordProvider.secret.password": "Admin password",
+    "settings.mailboxPasswordProvider.allowInsecureTls": "Allow invalid TLS certificate on the panel",
+    "settings.mailboxPasswordProvider.test": "Test connection",
+    "settings.mailboxPasswordProvider.testOk": "Connection successful.",
     "settings.integrations": "External connectors",
     "settings.integrations.description":
       "Register each provider's OAuth app (Google Cloud Console, Azure Portal, etc.) so users can connect Gmail/Outlook accounts from the webmail.",

@@ -1087,6 +1087,150 @@ npm run build</code></pre>
     },
   },
 
+  // ------------------------------------------------------ mailbox-password
+  {
+    slug: "mailbox-password",
+    title: { es: "Cambio de contraseña de buzones", en: "Mailbox password change" },
+    description: {
+      es: "Conectá la API de tu panel de hosting para que los usuarios cambien su propia contraseña de buzón desde enMail.",
+      en: "Connect your hosting panel's API so users can change their own mailbox password from enMail.",
+    },
+    body: {
+      es: `
+        <h1>Cambio de contraseña de buzones</h1>
+        <p class="lede">Una cuenta con buzón real (creada iniciando sesión directo, no un admin local) no tiene una contraseña propia de enMail: su contraseña ES la del buzón en tu servidor de correo. No existe un protocolo estándar de IMAP/SMTP para "cambiar la contraseña" — cada panel de hosting tiene su propia API. Configurando esto en <strong>Ajustes → Servidor de correo</strong>, tus usuarios pueden cambiarla ellos mismos desde <strong>Ajustes → Perfil</strong> en vez de depender de que alguien entre al panel a hacerlo.</p>
+
+        ${callout(
+          "tip",
+          "¿Es obligatorio?",
+          "",
+          "<p>No. Sin esto, esos usuarios van a ver el aviso \"gestioná tu contraseña desde el panel de hosting\" — enMail sigue funcionando igual para todo lo demás.</p>",
+          "",
+        ).es}
+
+        <h2>cPanel</h2>
+        <ol>
+          <li>Entrá a cPanel → <strong>Security → Manage API Tokens</strong> → creá un token nuevo (podés restringirlo solo a funciones de Email si tu versión de cPanel lo permite).</li>
+          <li>En enMail, elegí proveedor <strong>cPanel</strong>, cargá:
+            <ul>
+              <li><strong>URL del panel</strong>: <code>https://tu-servidor:2083</code></li>
+              <li><strong>Usuario</strong>: tu usuario de cPanel (no el email del buzón)</li>
+              <li><strong>API Token</strong>: el que acabás de generar</li>
+            </ul>
+          </li>
+        </ol>
+
+        <h2>Plesk</h2>
+        <ol>
+          <li>Necesitás un usuario <strong>admin</strong> de Plesk (la API XML solo admite ese rol sin restricciones).</li>
+          <li>En enMail, elegí proveedor <strong>Plesk</strong>, cargá:
+            <ul>
+              <li><strong>URL del panel</strong>: <code>https://tu-servidor:8443</code></li>
+              <li><strong>Usuario</strong>: <code>admin</code></li>
+              <li><strong>Contraseña de administrador</strong>: la de esa cuenta</li>
+            </ul>
+          </li>
+        </ol>
+
+        <h2>aaPanel</h2>
+        <ol>
+          <li>En el panel de aaPanel: <strong>Panel Settings → API interface</strong> → activalo. Te va a mostrar un <strong>API Token</strong> (guardalo, no se vuelve a mostrar igual).</li>
+          <li>En el mismo panel, cargá el <strong>IP allowlist</strong> con la IP desde la que va a llamar enMail — <strong>no uses <code>0.0.0.0/0</code> (cualquier IP)</strong> salvo que sepas bien la implicancia: esa API no es solo de correo, da acceso de administración a todo el panel.</li>
+          <li>En enMail, elegí proveedor <strong>aaPanel</strong>, cargá:
+            <ul>
+              <li><strong>URL del panel</strong>: <code>https://ip-o-dominio:puerto-del-panel</code> (el puerto propio del panel, no el 80/443 del sitio)</li>
+              <li><strong>API Token</strong>: el del paso 1</li>
+            </ul>
+          </li>
+        </ol>
+
+        ${callout(
+          "warning",
+          "Si enMail corre en el mismo servidor que aaPanel",
+          "",
+          "<p>Un contenedor Docker no ve <code>127.0.0.1</code> del host como \"localhost propio\" — para que la IP le cierre al allowlist de aaPanel, probá con la IP de la puerta de enlace del bridge de Docker (normalmente algo como <code>172.17.0.1</code>, revisá con <code>ip addr show docker0</code> en el servidor) o con la IP pública del servidor.</p>",
+          "",
+        ).es}
+
+        <p>Después de cargar los datos, usá el botón <strong>Probar conexión</strong> antes de darlo por hecho — valida las credenciales sin tocar ningún buzón real.</p>
+
+        ${callout(
+          "warning",
+          "Integración con aaPanel: no es una API oficial documentada",
+          "",
+          "<p>A diferencia de cPanel y Plesk (con APIs públicas y documentadas), esta integración con aaPanel llama a una función interna del plugin de correo instalado, reconstruida a partir de su código fuente. Una actualización futura del plugin de aaPanel podría cambiarla — si \"Probar conexión\" empieza a fallar después de actualizar aaPanel, avisá para revisarlo.</p>",
+          "",
+        ).es}
+      `,
+      en: `
+        <h1>Mailbox password change</h1>
+        <p class="lede">An account with a real mailbox (created by signing in directly, not a local admin) doesn't have its own enMail password: its password IS the mailbox's password on your mail server. There's no standard IMAP/SMTP protocol for "changing the password" — each hosting panel has its own API. Setting this up in <strong>Settings → Mail server</strong> lets those users change it themselves from <strong>Settings → Profile</strong> instead of depending on someone logging into the panel to do it.</p>
+
+        ${callout(
+          "tip",
+          "",
+          "Is this required?",
+          "",
+          "<p>No. Without this, those users will see the \"manage your password from the hosting panel\" notice — enMail keeps working the same for everything else.</p>",
+        ).en}
+
+        <h2>cPanel</h2>
+        <ol>
+          <li>Go to cPanel → <strong>Security → Manage API Tokens</strong> → create a new token (you can restrict it to Email-only functions if your cPanel version supports it).</li>
+          <li>In enMail, pick provider <strong>cPanel</strong>, fill in:
+            <ul>
+              <li><strong>Panel URL</strong>: <code>https://your-server:2083</code></li>
+              <li><strong>Username</strong>: your cPanel username (not the mailbox's email)</li>
+              <li><strong>API Token</strong>: the one you just generated</li>
+            </ul>
+          </li>
+        </ol>
+
+        <h2>Plesk</h2>
+        <ol>
+          <li>You need a Plesk <strong>admin</strong> user (the XML API only allows that role unrestricted).</li>
+          <li>In enMail, pick provider <strong>Plesk</strong>, fill in:
+            <ul>
+              <li><strong>Panel URL</strong>: <code>https://your-server:8443</code></li>
+              <li><strong>Username</strong>: <code>admin</code></li>
+              <li><strong>Admin password</strong>: that account's password</li>
+            </ul>
+          </li>
+        </ol>
+
+        <h2>aaPanel</h2>
+        <ol>
+          <li>In the aaPanel console: <strong>Panel Settings → API interface</strong> → turn it on. It'll show you an <strong>API Token</strong> (save it, it won't be shown the same way again).</li>
+          <li>In the same panel, set the <strong>IP allowlist</strong> to the IP enMail will call from — <strong>don't use <code>0.0.0.0/0</code> (any IP)</strong> unless you fully understand the implication: that API isn't mail-only, it grants admin access to the whole panel.</li>
+          <li>In enMail, pick provider <strong>aaPanel</strong>, fill in:
+            <ul>
+              <li><strong>Panel URL</strong>: <code>https://ip-or-domain:panel-port</code> (the panel's own port, not the site's 80/443)</li>
+              <li><strong>API Token</strong>: the one from step 1</li>
+            </ul>
+          </li>
+        </ol>
+
+        ${callout(
+          "warning",
+          "",
+          "If enMail runs on the same server as aaPanel",
+          "",
+          "<p>A Docker container doesn't see the host's <code>127.0.0.1</code> as its own localhost — for the IP to match aaPanel's allowlist, try the Docker bridge gateway IP (usually something like <code>172.17.0.1</code>, check with <code>ip addr show docker0</code> on the server) or the server's public IP.</p>",
+        ).en}
+
+        <p>After filling in the details, use the <strong>Test connection</strong> button before trusting it — it validates the credentials without touching any real mailbox.</p>
+
+        ${callout(
+          "warning",
+          "",
+          "aaPanel integration: not an officially documented API",
+          "",
+          "<p>Unlike cPanel and Plesk (which have public, documented APIs), this aaPanel integration calls an internal function of the installed mail plugin, reconstructed from its source code. A future aaPanel plugin update could change it — if \"Test connection\" starts failing after updating aaPanel, let us know so it can be reviewed.</p>",
+        ).en}
+      `,
+    },
+  },
+
   // ----------------------------------------------------------------- faq
   {
     slug: "faq",

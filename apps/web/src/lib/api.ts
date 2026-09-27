@@ -313,6 +313,23 @@ export const api = {
         body: JSON.stringify(input),
       }),
 
+    getMailboxPasswordProvider: () =>
+      request<MailboxPasswordProviderConfig>("/settings/mailbox-password-provider"),
+    updateMailboxPasswordProvider: (input: MailboxPasswordProviderInput) =>
+      request<MailboxPasswordProviderConfig>("/settings/mailbox-password-provider", {
+        method: "PUT",
+        body: JSON.stringify(input),
+      }),
+    testMailboxPasswordProvider: (input: MailboxPasswordProviderInput) =>
+      request<{ ok: true }>("/settings/mailbox-password-provider/test", {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+    // Cualquier usuario logueado: para saber si mostrar el form de cambiar
+    // password en el perfil de una cuenta MAIL_SERVER.
+    getMailboxPasswordProviderStatus: () =>
+      request<{ configured: boolean }>("/settings/mailbox-password-provider/status"),
+
     // Páginas dinámicas (Términos, Privacidad, etc.) — público: el login y
     // el footer las necesitan sin estar logueados.
     listPages: () => request<SitePage[]>("/settings/pages"),
@@ -504,3 +521,21 @@ export interface MailServerSettingsDto {
 }
 
 export type MailServerSettingsInput = MailServerSettingsDto;
+
+export type MailboxPasswordProviderType = "NONE" | "CPANEL" | "PLESK" | "AAPANEL";
+
+export interface MailboxPasswordProviderConfig {
+  provider: MailboxPasswordProviderType;
+  baseUrl: string;
+  username: string;
+  allowInsecureTls: boolean;
+  hasSecret: boolean;
+}
+
+export interface MailboxPasswordProviderInput {
+  provider: MailboxPasswordProviderType;
+  baseUrl?: string;
+  username?: string;
+  secret?: string;
+  allowInsecureTls?: boolean;
+}

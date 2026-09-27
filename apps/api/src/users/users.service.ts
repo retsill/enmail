@@ -10,10 +10,20 @@ import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import type { UserRole, ComposeStyle, MailDensity, ThemeBackgroundType } from '../generated/prisma/enums.js';
+import { AuthService } from '../auth/auth.service.js';
+import { SettingsService } from '../settings/settings.service.js';
+import { MailAccountsService } from '../mail-accounts/mail-accounts.service.js';
+import { MailboxPasswordService } from '../mailbox-password/mailbox-password.service.js';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auth: AuthService,
+    private readonly settings: SettingsService,
+    private readonly mailAccounts: MailAccountsService,
+    private readonly mailboxPassword: MailboxPasswordService,
+  ) {}
 
   findByEmail(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
@@ -149,21 +159,42 @@ export class UsersService {
     });
   }
 
-  // Solo aplica a cuentas LOCAL (admin/staff creados en la app). Las
-  // cuentas MAIL_SERVER no tienen passwordHash propio: su contraseña ES la
-  // del buzón real y se valida en vivo contra IMAP en cada login, así que
-  // cambiarla aquí no tendría ningún efecto real en el servidor de correo.
+  // Cuentas LOCAL (admin/staff creados en la app): passwordHash propio,
+  // cambio directo de toda la vida. Cuentas MAIL_SERVER: la contraseña real
+  // vive en el servidor de correo, así que solo se puede cambiar acá si el
+  // admin configuró un panel de hosting compatible (ver MailboxPasswordService) —
+  // sin eso, seguimos rechazando como antes en vez de fingir que funcionó.
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    if (user.authSource !== 'LOCAL' || !user.passwordHash) {
+
+    if (user.authSource === 'LOCAL') {
+      if (!user.passwordHash) {
+        throw new BadRequestException('Esta cuenta no gestiona su contraseña desde aquí');
+      }
+      const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+      if (!matches) {
+        throw new UnauthorizedException('La contraseña actual no es correcta');
+      }
+      const passwordHash = await bcrypt.hash(newPassword, 12);
+      await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+      return { ok: true as const };
+    }
+
+    const server = await this.settings.getMailServerSettings();
+    if (!server) {
       throw new BadRequestException('Esta cuenta no gestiona su contraseña desde aquí');
     }
-    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!matches) {
-      throw new UnauthorizedException('La contraseña actual no es correcta');
-    }
-    const passwordHash = await bcrypt.hash(newPassword, 12);
-    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    // Valida la contraseña ACTUAL en vivo contra IMAP antes de tocar nada —
+    // si alguien usa una sesión robada, igual necesita saber el password de
+    // verdad para poder cambiarlo.
+    await this.auth.verifyImapCredentials(user.email, currentPassword, server);
+
+    await this.mailboxPassword.changeRealMailboxPassword(user.email, newPassword);
+
+    // Si no se actualiza acá, la cuenta principal queda sincronizando con el
+    // password viejo hasta el próximo login manual (que sí lo refresca solo).
+    await this.mailAccounts.ensurePrimaryAccount(userId, user.email, newPassword, server);
+
     return { ok: true as const };
   }
 }
