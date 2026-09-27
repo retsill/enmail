@@ -29,10 +29,17 @@ const ALLOWED_ATTRS: Record<string, string[]> = {
   FONT: ["color", "size", "face"],
 };
 
+// Estas no solo no son "formato de texto" válido — dejar su TEXTO cuando se
+// las desenvuelve (como hace el resto de las etiquetas no permitidas) tira
+// el CSS/JS crudo de <style>/<script> como texto visible en el cuerpo. Se
+// eliminan enteras, contenido incluido.
+const DROP_TAGS = new Set(["SCRIPT", "STYLE", "HEAD", "TITLE", "META", "LINK", "NOSCRIPT", "IFRAME", "OBJECT", "EMBED"]);
+
 function sanitizeNode(node: Node): Node | null {
   if (node.nodeType === Node.TEXT_NODE) return node.cloneNode(true);
   if (node.nodeType !== Node.ELEMENT_NODE) return null;
   const el = node as Element;
+  if (DROP_TAGS.has(el.tagName)) return null;
   if (!ALLOWED_TAGS.has(el.tagName)) {
     // No es una etiqueta permitida: igual conservamos su texto/hijos "planos".
     const frag = document.createDocumentFragment();
@@ -202,8 +209,15 @@ export function SimpleRichEditor({
   // El contenido inicial se pone UNA sola vez: si sincronizáramos
   // innerHTML en cada `value` que cambia, el cursor saltaría al principio
   // en cada tecla (el eterno problema de contentEditable + React).
+  //
+  // sanitizeHtml acá es crítico, no cosmético: `value` puede ser el HTML
+  // citado de un correo AJENO (Responder/Reenviar meten el body original
+  // completo acá) — sin sanitizar, un <style> de ese correo se vuelve una
+  // hoja de estilos real aplicada a TODA la página (así se rompía el logo
+  // del header al responder), y un atributo onerror/onload en un <img>
+  // ejecutaría JS del remitente en la sesión del usuario.
   useEffect(() => {
-    if (editableRef.current) editableRef.current.innerHTML = value || "";
+    if (editableRef.current) editableRef.current.innerHTML = sanitizeHtml(value || "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -212,8 +226,9 @@ export function SimpleRichEditor({
     onReady({
       getHTML: () => editableRef.current?.innerHTML ?? "",
       setHTML: (nextHtml: string) => {
-        if (editableRef.current) editableRef.current.innerHTML = nextHtml;
-        onChange(nextHtml);
+        const clean = sanitizeHtml(nextHtml);
+        if (editableRef.current) editableRef.current.innerHTML = clean;
+        onChange(clean);
       },
       insertText: (text: string) => {
         editableRef.current?.focus();

@@ -117,6 +117,11 @@ export default function InboxPage() {
   // solo al abrir un mensaje distinto, no tiene sentido dejarlo abierto
   // mostrando los datos del correo anterior.
   const [showMessageDetails, setShowMessageDetails] = useState(false);
+  // Al responder/reenviar (variant="thread"), el mensaje original completo
+  // arriba del editor obligaba a scrollear mucho para llegar a escribir —
+  // se muestra colapsado (una línea, como Gmail) hasta que el usuario pida
+  // verlo entero a propósito.
+  const [showOriginalWhileReplying, setShowOriginalWhileReplying] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bodyData, setBodyData] = useState<{
     text?: string;
@@ -499,6 +504,7 @@ export default function InboxPage() {
     setBodyError(null);
     setThreadReply(null);
     setShowMessageDetails(false);
+    setShowOriginalWhileReplying(false);
     // Para el badge de carpeta en el header del lector: en Todos los
     // correos/Destacados se puede abrir un mensaje de una cuenta cuyas
     // carpetas nunca se cargaron (solo se cargan al expandirla en el
@@ -535,6 +541,35 @@ export default function InboxPage() {
 
   function currentAccountIdFor(message: MailMessage | UnifiedMessage): string {
     return "mailAccount" in message ? message.mailAccount.id : (activeAccountId as string);
+  }
+
+  // Un mensaje "es un borrador" porque vive en la carpeta Drafts de la
+  // cuenta, no por un flag propio (el campo isDraft del mensaje nunca se
+  // termina de setear en ningún lado — siempre es el default false). Con
+  // esto, hacerle click abre el editor de Redactar en vez del lector.
+  function isDraftMessage(message: MailMessage | UnifiedMessage): boolean {
+    if ("folder" in message) {
+      const accountId = currentAccountIdFor(message);
+      const folder = (foldersByAccount[accountId] ?? []).find((f) => f.id === message.folder.id);
+      return folder?.specialUse === "\\Drafts";
+    }
+    return activeFolder?.specialUse === "\\Drafts";
+  }
+
+  async function openDraftForEditing(message: MailMessage, accountId: string, folderId: string) {
+    try {
+      const body = await api.mail.body(accountId, folderId, message.uid);
+      openComposeWindow(accountId, {
+        toList: body.toAddresses,
+        ccList: body.ccAddresses,
+        bccList: body.bccAddresses,
+        subject: message.subject ?? undefined,
+        html: body.html ?? (body.text ? `<p>${escapeHtml(body.text).replace(/\n/g, "<br>")}</p>` : ""),
+        draftMessageId: message.id,
+      });
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Error");
+    }
   }
 
   async function toggleFlag(message: MailMessage | UnifiedMessage) {
@@ -753,6 +788,7 @@ export default function InboxPage() {
   // la ventana emergente/pantalla completa — esa preferencia es solo para
   // mensajes nuevos desde "Redactar".
   function openReply(message: MailMessage, forward: boolean) {
+    setShowOriginalWhileReplying(false);
     const account = accounts.find((a) => a.id === (activeAccountId ?? currentAccountIdFor(message)));
     const quotedContent = bodyData?.html
       ? bodyData.html
@@ -1385,7 +1421,11 @@ ${content}
                             JSON.stringify({ messageId: message.id, accountId: msgAccountId }),
                           )
                         }
-                        onClick={() => openMessage(message, msgAccountId, msgFolderId)}
+                        onClick={() =>
+                          isDraftMessage(message)
+                            ? openDraftForEditing(message, msgAccountId, msgFolderId)
+                            : openMessage(message, msgAccountId, msgFolderId)
+                        }
                         className={`group flex w-full items-center gap-2 border-b border-border px-2 sm:gap-3 sm:px-3 ${rowPadding} text-left text-sm hover:z-10 hover:shadow-md ${
                           selectedIds.has(message.id) ? "bg-accent-soft" : ""
                         }`}
@@ -1715,17 +1755,38 @@ ${content}
               {bodyError ? (
                 <p className="text-sm text-danger">{bodyError}</p>
               ) : bodyData ? (
-                <>
-                  <EmailBody html={bodyData.html} text={bodyData.text} />
-                  {bodyData.attachments && bodyData.attachments.length > 0 && selectedFolderId ? (
-                    <AttachmentsList
-                      attachments={bodyData.attachments}
-                      accountId={currentAccountIdFor(selectedMessage)}
-                      folderId={selectedFolderId}
-                      uid={selectedMessage.uid}
-                    />
-                  ) : null}
-                </>
+                threadReply && !showOriginalWhileReplying ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowOriginalWhileReplying(true)}
+                    className="mb-2 flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left text-sm hover:bg-surface-hover"
+                  >
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-medium text-accent">
+                      {(selectedMessage.fromName || selectedMessage.fromAddress || "?").charAt(0).toUpperCase()}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">
+                      <span className="font-medium">
+                        {selectedMessage.fromName || selectedMessage.fromAddress || t("list.unknownSender")}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        — {(bodyData.text?.trim() || selectedMessage.subject || "").slice(0, 120)}
+                      </span>
+                    </span>
+                  </button>
+                ) : (
+                  <>
+                    <EmailBody html={bodyData.html} text={bodyData.text} />
+                    {bodyData.attachments && bodyData.attachments.length > 0 && selectedFolderId ? (
+                      <AttachmentsList
+                        attachments={bodyData.attachments}
+                        accountId={currentAccountIdFor(selectedMessage)}
+                        folderId={selectedFolderId}
+                        uid={selectedMessage.uid}
+                      />
+                    ) : null}
+                  </>
+                )
               ) : (
                 <p className="text-sm text-muted-foreground">{t("reader.loading")}</p>
               )}

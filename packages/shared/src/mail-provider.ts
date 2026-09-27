@@ -55,6 +55,12 @@ export interface MailMessageBody {
   html?: string;
   to?: string;
   cc?: string;
+  // Direcciones sueltas (sin nombre, sin formatear) — para poder precargar
+  // un borrador en el editor de Redactar, que espera arrays de emails, no
+  // el texto ya armado para mostrar en el header del lector.
+  toAddresses?: string[];
+  ccAddresses?: string[];
+  bccAddresses?: string[];
   attachments?: MailAttachmentMeta[];
 }
 

@@ -22,6 +22,16 @@ function addressText(addr: AddressObject | AddressObject[] | undefined): string 
   return addr.text;
 }
 
+// Direcciones sueltas (sin nombre) — para precargar el editor de Redactar
+// al reabrir un borrador, que espera arrays de emails, no el texto ya
+// formateado para mostrar.
+function addressList(addr: AddressObject | AddressObject[] | undefined): string[] | undefined {
+  if (!addr) return undefined;
+  const objs = Array.isArray(addr) ? addr : [addr];
+  const emails = objs.flatMap((o) => o.value.map((v) => v.address).filter((a): a is string => !!a));
+  return emails.length ? emails : undefined;
+}
+
 // Implementación del core: IMAP/SMTP contra el servidor de correo propio del
 // cliente. Cada instancia representa la conexión de UNA MailAccount — no es
 // un singleton de Nest, se crea por request/uso (ver MailSyncService).
@@ -227,6 +237,9 @@ export class ImapMailProvider implements MailProviderAdapter {
       html: typeof parsed.html === 'string' ? parsed.html : undefined,
       to: addressText(parsed.to),
       cc: addressText(parsed.cc),
+      toAddresses: addressList(parsed.to),
+      ccAddresses: addressList(parsed.cc),
+      bccAddresses: addressList(parsed.bcc),
       attachments: parsed.attachments.map((att, index) => ({
         index,
         filename: att.filename ?? `adjunto-${index + 1}`,

@@ -16,9 +16,19 @@ function formatFileSize(bytes: number): string {
 
 export interface ComposeInitial {
   to?: string;
+  // Listas ya separadas (varios destinatarios) — para reabrir un borrador
+  // con más de un "to"/cc/bcc, que `to` (un solo string, pensado para
+  // precargar el remitente al responder) no puede representar.
+  toList?: string[];
+  ccList?: string[];
+  bccList?: string[];
   subject?: string;
   html?: string;
   inReplyTo?: string;
+  // Si esta ventana es la edición de un borrador ya guardado (no un
+  // mensaje nuevo), acá va su id — al enviar o al volver a guardar como
+  // borrador se descarta esta copia vieja en vez de dejarla duplicada.
+  draftMessageId?: string;
 }
 
 // Anchos usados para acomodar varias ventanas de "popup" lado a lado (deben
@@ -78,11 +88,11 @@ export function ComposeDialog({
 }) {
   const { t } = useLocale();
   const [accountId, setAccountId] = useState(defaultAccountId);
-  const [to, setTo] = useState<string[]>(initial?.to ? [initial.to] : []);
-  const [cc, setCc] = useState<string[]>([]);
-  const [bcc, setBcc] = useState<string[]>([]);
-  const [showCc, setShowCc] = useState(false);
-  const [showBcc, setShowBcc] = useState(false);
+  const [to, setTo] = useState<string[]>(initial?.toList ?? (initial?.to ? [initial.to] : []));
+  const [cc, setCc] = useState<string[]>(initial?.ccList ?? []);
+  const [bcc, setBcc] = useState<string[]>(initial?.bccList ?? []);
+  const [showCc, setShowCc] = useState(!!initial?.ccList?.length);
+  const [showBcc, setShowBcc] = useState(!!initial?.bccList?.length);
   const [subject, setSubject] = useState(initial?.subject ?? "");
   const signature = accounts.find((a) => a.id === defaultAccountId)?.signature;
   const [html, setHtml] = useState(
@@ -172,10 +182,21 @@ export function ComposeDialog({
           subject: subject || undefined,
           html: currentHtml || undefined,
         });
+        // Esto acaba de guardar una copia NUEVA del borrador — si veníamos
+        // editando uno ya existente, la vieja queda duplicada en Drafts si
+        // no se descarta (a Trash, no un borrado permanente).
+        if (initial?.draftMessageId) {
+          await api.mail.deleteMessage(accountId, initial.draftMessageId).catch(() => undefined);
+        }
       } catch {
         // Si falla guardar el borrador no bloqueamos el cierre — el
         // usuario ya decidió descartar la ventana.
       }
+    } else if (initial?.draftMessageId) {
+      // El usuario vació todo el contenido de un borrador existente y
+      // cerró: ya no queda nada que guardar, así que el borrador viejo
+      // también se descarta en vez de quedar huérfano con contenido viejo.
+      await api.mail.deleteMessage(accountId, initial.draftMessageId).catch(() => undefined);
     }
     onClose();
   }
@@ -195,6 +216,11 @@ export function ComposeDialog({
         references: initial?.inReplyTo,
         attachments,
       });
+      // Un borrador enviado deja de ser un borrador — la copia vieja en
+      // Drafts se descarta (a Trash) en vez de quedar ahí para siempre.
+      if (initial?.draftMessageId) {
+        await api.mail.deleteMessage(accountId, initial.draftMessageId).catch(() => undefined);
+      }
       onSent();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t("login.error.generic"));
