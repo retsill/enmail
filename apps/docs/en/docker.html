@@ -75,15 +75,15 @@ cd enmail</code></pre>
 
         <h2>4. Start the containers</h2>
         <pre><code>docker compose up -d --build</code></pre>
-        <p>The first run takes a few minutes (it builds the images). Once it's done, the API runs the database migrations and creates the admin user automatically.</p>
+        <p>The first run takes a few minutes (it builds the images). Once it's done, the API runs the database migrations — there's no user yet, that's the next step.</p>
 
-        <h2>5. Log in</h2>
-        <p>Open <code>http://localhost:3000</code> (or the domain you configured) and log in with:</p>
-        <table>
-          <tr><th>Email</th><td><code>admin@webmail.local</code></td></tr>
-          <tr><th>Password</th><td><code>admin12345</code></td></tr>
-        </table>
-        <div class="callout callout-warning"><span class="callout-title">Change the password</span><p>Go to Settings → Profile as soon as you log in and change the admin password. If you'd rather choose it upfront, set <code>SEED_ADMIN_EMAIL</code> and <code>SEED_ADMIN_PASSWORD</code> in your <code>.env</code> before the first <code>docker compose up</code>.</p></div>
+        <h2>5. Setup wizard</h2>
+        <p>Open <code>http://localhost:3000</code> (or the domain you configured): since no admin exists yet, it takes you straight to a first-run wizard. There, in one step, you set:</p>
+        <ul>
+          <li>Your admin account's name, email and password (you choose it, there's no default).</li>
+          <li>Your mail server's IMAP/SMTP details — host, port and TLS for each.</li>
+        </ul>
+        <p>Once the wizard finishes you're already logged in as admin, straight into the inbox.</p>
 
         <h2>Useful commands</h2>
         <table>

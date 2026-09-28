@@ -1007,12 +1007,7 @@ ${content}
         onClick={toggleSidebar}
       />
       <aside
-        onClick={(e) => {
-          // Elegir algo en el drawer (redactar, una cuenta, una carpeta) lo
-          // cierra en mobile — en desktop no hace nada (ya está fijo).
-          if (isMobile && (e.target as HTMLElement).closest("button")) closeSidebar();
-        }}
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col gap-3 overflow-y-auto bg-background px-3 py-4 shadow-2xl transition-transform duration-300 ease-out md:static md:z-auto md:translate-x-0 md:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-full shrink-0 flex-col gap-3 overflow-y-auto bg-background px-3 py-4 shadow-2xl transition-transform duration-300 ease-out md:static md:z-auto md:w-72 md:translate-x-0 md:shadow-none ${
           sidebarCollapsed ? "-translate-x-full" : "translate-x-0"
         }`}
       >
@@ -1020,6 +1015,7 @@ ${content}
         <button
           onClick={() => {
             if (currentComposeAccountId) openComposeWindow(currentComposeAccountId);
+            if (isMobile) closeSidebar();
           }}
           disabled={!currentComposeAccountId}
           className="flex items-center gap-3 self-start rounded-2xl bg-accent-soft px-6 py-4 text-sm font-medium text-foreground shadow-sm transition hover:shadow-md disabled:opacity-60"
@@ -1031,7 +1027,10 @@ ${content}
         </button>
 
         <button
-          onClick={selectUnified}
+          onClick={() => {
+            selectUnified();
+            if (isMobile) closeSidebar();
+          }}
           className={`flex items-center gap-3 rounded-r-full px-4 py-2 text-left text-sm ${
             viewMode === UNIFIED ? "bg-accent-soft font-medium text-accent" : "hover:bg-surface-hover"
           }`}
@@ -1046,7 +1045,10 @@ ${content}
         </button>
 
         <button
-          onClick={selectStarred}
+          onClick={() => {
+            selectStarred();
+            if (isMobile) closeSidebar();
+          }}
           className={`flex items-center gap-3 rounded-r-full px-4 py-2 text-left text-sm ${
             viewMode === STARRED ? "bg-accent-soft font-medium text-accent" : "hover:bg-surface-hover"
           }`}
@@ -1121,7 +1123,10 @@ ${content}
                         onChange={(color) => handleFolderColor(account.id, folder.id, color)}
                       />
                       <button
-                        onClick={() => selectFolder(account.id, folder.id)}
+                        onClick={() => {
+                          selectFolder(account.id, folder.id);
+                          if (isMobile) closeSidebar();
+                        }}
                         className={`flex flex-1 items-center gap-2 rounded-r-full py-1.5 pr-1 text-left text-sm ${
                           viewMode === "account" && activeAccountId === account.id && activeFolderId === folder.id
                             ? "bg-accent-soft font-medium text-accent"
@@ -1196,7 +1201,10 @@ ${content}
         </div>
 
         <button
-          onClick={() => setShowAddAccount(true)}
+          onClick={() => {
+            setShowAddAccount(true);
+            if (isMobile) closeSidebar();
+          }}
           className="flex items-center gap-2 rounded-r-full px-4 py-2 text-left text-xs text-muted-foreground hover:bg-surface-hover"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

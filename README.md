@@ -14,7 +14,7 @@ cp .env.example .env
 docker compose up -d --build
 ```
 
-Entrá a `http://localhost:3000` con `admin@webmail.local` / `admin12345` (cambiá la contraseña apenas entres). Guía completa: [docs.xcodevs.com/enmail/es/docker.html](https://docs.xcodevs.com/enmail/es/docker.html).
+Entrá a `http://localhost:3000` — como es la primera vez, te lleva directo a un asistente de instalación para crear tu cuenta de administrador y cargar los datos de tu servidor de correo. Guía completa: [docs.xcodevs.com/enmail/es/docker.html](https://docs.xcodevs.com/enmail/es/docker.html).
 
 ## Estructura del proyecto
 

@@ -63,12 +63,20 @@ export function AppRail() {
 // permanente que en un teléfono se comía espacio útil de la pantalla.
 export function MobileAppSwitcher() {
   const { t } = useLocale();
-  const { activeApp, setActiveApp } = useInboxView();
+  const { activeApp, setActiveApp, closeSidebar } = useInboxView();
+
+  // Este switcher solo se renderiza en mobile (md:hidden más abajo), así
+  // que cerrar el drawer acá siempre es correcto, sin necesitar chequear
+  // isMobile como hacen los otros botones del sidebar compartidos con desktop.
+  function select(app: InboxApp) {
+    setActiveApp(app);
+    closeSidebar();
+  }
 
   return (
     <div className="mb-1 flex gap-1 rounded-full bg-surface-muted p-1 md:hidden">
       <button
-        onClick={() => setActiveApp("mail")}
+        onClick={() => select("mail")}
         className={`flex-1 rounded-full py-1.5 text-xs font-medium ${
           activeApp === "mail" ? "bg-surface shadow-sm" : "text-muted-foreground"
         }`}
@@ -76,7 +84,7 @@ export function MobileAppSwitcher() {
         {t("rail.mail")}
       </button>
       <button
-        onClick={() => setActiveApp("contacts")}
+        onClick={() => select("contacts")}
         className={`flex-1 rounded-full py-1.5 text-xs font-medium ${
           activeApp === "contacts" ? "bg-surface shadow-sm" : "text-muted-foreground"
         }`}

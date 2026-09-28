@@ -218,21 +218,15 @@ cd enmail</code></pre>
 
         <h2>4. Levantar los contenedores</h2>
         <pre><code>docker compose up -d --build</code></pre>
-        <p>La primera vez tarda unos minutos (construye las imágenes). Al terminar, la API corre las migraciones de base de datos y crea el usuario administrador automáticamente.</p>
+        <p>La primera vez tarda unos minutos (construye las imágenes). Al terminar, la API corre las migraciones de base de datos — todavía no hay ningún usuario, eso se hace en el paso siguiente.</p>
 
-        <h2>5. Entrar</h2>
-        <p>Abrí <code>http://localhost:3000</code> (o el dominio que configuraste) e iniciá sesión con:</p>
-        <table>
-          <tr><th>Email</th><td><code>admin@webmail.local</code></td></tr>
-          <tr><th>Contraseña</th><td><code>admin12345</code></td></tr>
-        </table>
-        ${callout(
-          "warning",
-          "Cambiá la contraseña",
-          "Change the password",
-          "<p>Entrá a Ajustes → Perfil apenas inicies sesión y cambiá la contraseña del admin. Si preferís elegirla desde el principio, definí <code>SEED_ADMIN_EMAIL</code> y <code>SEED_ADMIN_PASSWORD</code> en tu <code>.env</code> antes del primer <code>docker compose up</code>.</p>",
-          "",
-        ).es}
+        <h2>5. Asistente de instalación</h2>
+        <p>Abrí <code>http://localhost:3000</code> (o el dominio que configuraste): como todavía no existe ningún administrador, te va a mandar directo a un asistente de primer uso. Ahí completás en un solo paso:</p>
+        <ul>
+          <li>Nombre, email y contraseña de tu cuenta de administrador (la elegís vos, no hay ninguna por defecto).</li>
+          <li>Los datos de tu servidor de correo (IMAP/SMTP) — host, puerto y TLS de cada uno.</li>
+        </ul>
+        <p>Al terminar el asistente ya quedás logueado como admin, directo en la bandeja.</p>
 
         <h2>Comandos útiles</h2>
         <table>
@@ -275,21 +269,15 @@ cd enmail</code></pre>
 
         <h2>4. Start the containers</h2>
         <pre><code>docker compose up -d --build</code></pre>
-        <p>The first run takes a few minutes (it builds the images). Once it's done, the API runs the database migrations and creates the admin user automatically.</p>
+        <p>The first run takes a few minutes (it builds the images). Once it's done, the API runs the database migrations — there's no user yet, that's the next step.</p>
 
-        <h2>5. Log in</h2>
-        <p>Open <code>http://localhost:3000</code> (or the domain you configured) and log in with:</p>
-        <table>
-          <tr><th>Email</th><td><code>admin@webmail.local</code></td></tr>
-          <tr><th>Password</th><td><code>admin12345</code></td></tr>
-        </table>
-        ${callout(
-          "warning",
-          "",
-          "Change the password",
-          "",
-          "<p>Go to Settings → Profile as soon as you log in and change the admin password. If you'd rather choose it upfront, set <code>SEED_ADMIN_EMAIL</code> and <code>SEED_ADMIN_PASSWORD</code> in your <code>.env</code> before the first <code>docker compose up</code>.</p>",
-        ).en}
+        <h2>5. Setup wizard</h2>
+        <p>Open <code>http://localhost:3000</code> (or the domain you configured): since no admin exists yet, it takes you straight to a first-run wizard. There, in one step, you set:</p>
+        <ul>
+          <li>Your admin account's name, email and password (you choose it, there's no default).</li>
+          <li>Your mail server's IMAP/SMTP details — host, port and TLS for each.</li>
+        </ul>
+        <p>Once the wizard finishes you're already logged in as admin, straight into the inbox.</p>
 
         <h2>Useful commands</h2>
         <table>
@@ -917,12 +905,13 @@ npm run build</code></pre>
           <tr><td><code>PORT</code></td><td>API</td><td>Puerto donde escucha la API. Por defecto 3001.</td></tr>
         </table>
 
-        <h2>Sembrado inicial (opcional)</h2>
-        <table>
-          <tr><th>Variable</th><th>Dónde</th><th>Descripción</th></tr>
-          <tr><td><code>SEED_ADMIN_EMAIL</code></td><td>API</td><td>Email del usuario administrador creado la primera vez. Por defecto <code>admin@webmail.local</code>.</td></tr>
-          <tr><td><code>SEED_ADMIN_PASSWORD</code></td><td>API</td><td>Contraseña del administrador. Por defecto <code>admin12345</code> — cambiala.</td></tr>
-        </table>
+        ${callout(
+          "tip",
+          "¿Cómo se crea el administrador?",
+          "",
+          "<p>No hace falta ninguna variable de entorno para esto: la primera vez que entrás a la app (sin ningún admin todavía creado), te manda directo a un asistente de instalación donde elegís el nombre/email/contraseña del admin y cargás los datos del servidor de correo. Ver <a href=\"docker.html\">Instalación con Docker</a>.</p>",
+          "",
+        ).es}
 
         ${callout(
           "tip",
@@ -961,12 +950,13 @@ npm run build</code></pre>
           <tr><td><code>PORT</code></td><td>API</td><td>Port the API listens on. Defaults to 3001.</td></tr>
         </table>
 
-        <h2>Initial seed (optional)</h2>
-        <table>
-          <tr><th>Variable</th><th>Where</th><th>Description</th></tr>
-          <tr><td><code>SEED_ADMIN_EMAIL</code></td><td>API</td><td>Email of the admin user created on first run. Defaults to <code>admin@webmail.local</code>.</td></tr>
-          <tr><td><code>SEED_ADMIN_PASSWORD</code></td><td>API</td><td>Admin password. Defaults to <code>admin12345</code> — change it.</td></tr>
-        </table>
+        ${callout(
+          "tip",
+          "",
+          "How is the admin created?",
+          "",
+          "<p>No environment variable needed for this: the first time you open the app (with no admin created yet), it takes you straight to a setup wizard where you pick the admin's name/email/password and enter the mail server details. See <a href=\"docker.html\">Docker installation</a>.</p>",
+        ).en}
 
         ${callout(
           "tip",

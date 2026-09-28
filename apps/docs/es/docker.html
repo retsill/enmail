@@ -75,15 +75,15 @@ cd enmail</code></pre>
 
         <h2>4. Levantar los contenedores</h2>
         <pre><code>docker compose up -d --build</code></pre>
-        <p>La primera vez tarda unos minutos (construye las imágenes). Al terminar, la API corre las migraciones de base de datos y crea el usuario administrador automáticamente.</p>
+        <p>La primera vez tarda unos minutos (construye las imágenes). Al terminar, la API corre las migraciones de base de datos — todavía no hay ningún usuario, eso se hace en el paso siguiente.</p>
 
-        <h2>5. Entrar</h2>
-        <p>Abrí <code>http://localhost:3000</code> (o el dominio que configuraste) e iniciá sesión con:</p>
-        <table>
-          <tr><th>Email</th><td><code>admin@webmail.local</code></td></tr>
-          <tr><th>Contraseña</th><td><code>admin12345</code></td></tr>
-        </table>
-        <div class="callout callout-warning"><span class="callout-title">Cambiá la contraseña</span><p>Entrá a Ajustes → Perfil apenas inicies sesión y cambiá la contraseña del admin. Si preferís elegirla desde el principio, definí <code>SEED_ADMIN_EMAIL</code> y <code>SEED_ADMIN_PASSWORD</code> en tu <code>.env</code> antes del primer <code>docker compose up</code>.</p></div>
+        <h2>5. Asistente de instalación</h2>
+        <p>Abrí <code>http://localhost:3000</code> (o el dominio que configuraste): como todavía no existe ningún administrador, te va a mandar directo a un asistente de primer uso. Ahí completás en un solo paso:</p>
+        <ul>
+          <li>Nombre, email y contraseña de tu cuenta de administrador (la elegís vos, no hay ninguna por defecto).</li>
+          <li>Los datos de tu servidor de correo (IMAP/SMTP) — host, puerto y TLS de cada uno.</li>
+        </ul>
+        <p>Al terminar el asistente ya quedás logueado como admin, directo en la bandeja.</p>
 
         <h2>Comandos útiles</h2>
         <table>

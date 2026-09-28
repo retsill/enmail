@@ -78,12 +78,7 @@
           <tr><td><code>PORT</code></td><td>API</td><td>Port the API listens on. Defaults to 3001.</td></tr>
         </table>
 
-        <h2>Initial seed (optional)</h2>
-        <table>
-          <tr><th>Variable</th><th>Where</th><th>Description</th></tr>
-          <tr><td><code>SEED_ADMIN_EMAIL</code></td><td>API</td><td>Email of the admin user created on first run. Defaults to <code>admin@webmail.local</code>.</td></tr>
-          <tr><td><code>SEED_ADMIN_PASSWORD</code></td><td>API</td><td>Admin password. Defaults to <code>admin12345</code> — change it.</td></tr>
-        </table>
+        <div class="callout callout-tip"><span class="callout-title">How is the admin created?</span><p>No environment variable needed for this: the first time you open the app (with no admin created yet), it takes you straight to a setup wizard where you pick the admin's name/email/password and enter the mail server details. See <a href="docker.html">Docker installation</a>.</p></div>
 
         <div class="callout callout-tip"><span class="callout-title">Generating secrets</span><p>For <code>JWT_SECRET</code>: <code>openssl rand -hex 32</code>. For <code>MAIL_ENCRYPTION_KEY</code> (must be exactly 32 characters): <code>openssl rand -hex 16</code> gives you 32 hex characters.</p></div>
       

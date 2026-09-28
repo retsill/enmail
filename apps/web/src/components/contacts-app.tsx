@@ -102,7 +102,7 @@ export function ContactsApp({ sidebarCollapsed }: { sidebarCollapsed: boolean })
           onClick={(e) => {
             if (isMobile && (e.target as HTMLElement).closest("button")) closeSidebar();
           }}
-          className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col gap-3 overflow-y-auto bg-background px-3 py-4 shadow-2xl transition-transform duration-300 ease-out md:static md:z-auto md:translate-x-0 md:border-r md:border-border md:shadow-none ${
+          className={`fixed inset-y-0 left-0 z-40 flex w-full shrink-0 flex-col gap-3 overflow-y-auto bg-background px-3 py-4 shadow-2xl transition-transform duration-300 ease-out md:static md:z-auto md:w-72 md:translate-x-0 md:border-r md:border-border md:shadow-none ${
             sidebarCollapsed ? "-translate-x-full" : "translate-x-0"
           }`}
         >
