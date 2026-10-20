@@ -17,7 +17,7 @@ import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
-import type { JwtPayload } from '../auth/auth.service.js';
+import { AuthService, type JwtPayload } from '../auth/auth.service.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { MailAccountsService } from '../mail-accounts/mail-accounts.service.js';
 import { MailSyncService } from './mail-sync.service.js';
@@ -41,7 +41,20 @@ export class MailController {
     private readonly prisma: PrismaService,
     private readonly mailAccounts: MailAccountsService,
     private readonly mailSync: MailSyncService,
+    private readonly auth: AuthService,
   ) {}
+
+  // El front lo pide una vez al abrir un mensaje con adjuntos y lo
+  // reusa para todos los links de descarga de esa sesión de lectura —
+  // nunca al momento del click (eso reintroduciría el mismo problema de
+  // "hace falta clickear dos veces" que esto vino a resolver: un fetch
+  // async antes del click le hace perder al navegador el gesto del
+  // usuario que habilita la descarga).
+  @Get('download-token')
+  async getDownloadToken(@CurrentUser() user: JwtPayload) {
+    const token = await this.auth.issueDownloadToken(user);
+    return { token };
+  }
 
   @Post('sync')
   async sync(@CurrentUser() user: JwtPayload, @Param('mailAccountId') mailAccountId: string) {

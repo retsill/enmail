@@ -60,36 +60,27 @@ async function upload<T>(path: string, file: File): Promise<T> {
   return requestFormData<T>(path, formData);
 }
 
-// Los endpoints de adjuntos requieren el header Authorization, así que no se
-// pueden abrir con un <a href> normal — se baja como blob y se dispara la
-// descarga con un <a download> sintético, revocando el object URL después.
-async function downloadFile(path: string, fallbackFilename: string): Promise<void> {
-  const token = getToken();
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ message: res.statusText }));
-    throw new ApiError(body.message ?? "Error de red", res.status);
-  }
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const disposition = res.headers.get("Content-Disposition") ?? "";
-  // Preferir filename* (UTF-8 real) por sobre el filename= plano, que es
-  // solo un fallback ASCII-safe — si se toma el primero que aparece en el
-  // string, siempre gana el fallback mutilado en vez del nombre real.
-  const starMatch = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
-  const plainMatch = /filename="([^"]*)"/i.exec(disposition);
-  const filename = starMatch
-    ? decodeURIComponent(starMatch[1])
-    : (plainMatch?.[1] ?? fallbackFilename);
+// Antes esto bajaba el archivo con fetch+blob y recién ahí disparaba un
+// <a download> sintético — pero ese await ANTES del click le hace perder al
+// navegador el "gesto de usuario" que habilita la descarga en varios
+// navegadores (sobre todo mobile), así que la primera vez no pasaba nada y
+// había que clickear de nuevo. Un <a href> real, clickeado sin ningún await
+// de por medio, no tiene ese problema — el navegador maneja la descarga
+// nativamente apenas se dispara el click. Como esto no puede mandar el
+// header Authorization, el token viaja por querystring (ver
+// AuthService.issueDownloadToken: de corta vida, no el de sesión de 24hs).
+export function buildDownloadUrl(path: string, token: string): string {
+  return `${API_URL}${path}?token=${encodeURIComponent(token)}`;
+}
+
+export function triggerDownload(url: string): void {
   const a = document.createElement("a");
   a.href = url;
-  a.download = filename;
+  a.target = "_blank";
+  a.rel = "noopener";
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(url);
 }
 
 export interface LoginResponse {
@@ -202,16 +193,12 @@ export const api = {
       }>(
         `/mail-accounts/${accountId}/folders/${folderId}/messages/${uid}/body`,
       ),
-    downloadAttachment: (accountId: string, folderId: string, uid: number, attachment: MailAttachment) =>
-      downloadFile(
-        `/mail-accounts/${accountId}/folders/${folderId}/messages/${uid}/attachments/${attachment.index}`,
-        attachment.filename,
-      ),
-    downloadAllAttachments: (accountId: string, folderId: string, uid: number) =>
-      downloadFile(
-        `/mail-accounts/${accountId}/folders/${folderId}/messages/${uid}/attachments.zip`,
-        "adjuntos.zip",
-      ),
+    getDownloadToken: (accountId: string) =>
+      request<{ token: string }>(`/mail-accounts/${accountId}/download-token`),
+    attachmentDownloadPath: (accountId: string, folderId: string, uid: number, index: number) =>
+      `/mail-accounts/${accountId}/folders/${folderId}/messages/${uid}/attachments/${index}`,
+    attachmentsZipDownloadPath: (accountId: string, folderId: string, uid: number) =>
+      `/mail-accounts/${accountId}/folders/${folderId}/messages/${uid}/attachments.zip`,
     // multipart/form-data (no JSON): permite adjuntar archivos sin pelear
     // con el límite del body JSON del servidor.
     send: (accountId: string, input: SendMessageInput) => {

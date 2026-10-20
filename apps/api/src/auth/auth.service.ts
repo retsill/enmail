@@ -99,6 +99,18 @@ export class AuthService {
     }
   }
 
+  // Para los links de descarga de adjuntos: una navegación real del
+  // navegador (<a href>, no fetch+blob) no puede mandar el header
+  // Authorization, así que el token viaja en la URL — pero el de sesión
+  // dura 24hs y da acceso a TODA la cuenta, exponerlo en una URL (que
+  // queda en el historial del navegador, logs del servidor, etc.) es un
+  // riesgo innecesario para solo bajar un archivo. Este token de corta
+  // vida cubre esa ventana sin repetir ese riesgo.
+  async issueDownloadToken(user: JwtPayload) {
+    const payload: JwtPayload = { sub: user.sub, email: user.email, role: user.role };
+    return this.jwt.signAsync(payload, { expiresIn: '10m' });
+  }
+
   // Público: el wizard de instalación (SetupService) también necesita loguear
   // al admin recién creado de una, sin pedirle que inicie sesión aparte.
   async issueToken(user: {

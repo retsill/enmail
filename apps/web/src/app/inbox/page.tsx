@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   api,
   ApiError,
+  buildDownloadUrl,
+  triggerDownload,
   type Addon,
   type MailAccount,
   type MailAttachment,
@@ -1966,32 +1968,36 @@ function AttachmentsList({
   uid: number;
 }) {
   const { t } = useLocale();
-  const [downloadingIndex, setDownloadingIndex] = useState<number | null>(null);
-  const [downloadingZip, setDownloadingZip] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Se pide UNA vez al montar (no al clickear): clickear un <a href> sin
+  // ningún await de por medio es lo que hace que el navegador dispare la
+  // descarga nativa de una, en el mismo gesto del click — si el token se
+  // pidiera recién al click, volveríamos al mismo problema de "hay que
+  // clickear dos veces" que este cambio vino a resolver.
+  const [downloadToken, setDownloadToken] = useState<string | null>(null);
 
-  async function handleDownload(attachment: MailAttachment) {
-    setError(null);
-    setDownloadingIndex(attachment.index);
-    try {
-      await api.mail.downloadAttachment(accountId, folderId, uid, attachment);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error");
-    } finally {
-      setDownloadingIndex(null);
-    }
+  useEffect(() => {
+    let cancelled = false;
+    api.mail
+      .getDownloadToken(accountId)
+      .then((res) => {
+        if (!cancelled) setDownloadToken(res.token);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [accountId]);
+
+  function handleDownload(attachment: MailAttachment) {
+    if (!downloadToken) return;
+    const path = api.mail.attachmentDownloadPath(accountId, folderId, uid, attachment.index);
+    triggerDownload(buildDownloadUrl(path, downloadToken));
   }
 
-  async function handleDownloadAll() {
-    setError(null);
-    setDownloadingZip(true);
-    try {
-      await api.mail.downloadAllAttachments(accountId, folderId, uid);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Error");
-    } finally {
-      setDownloadingZip(false);
-    }
+  function handleDownloadAll() {
+    if (!downloadToken) return;
+    const path = api.mail.attachmentsZipDownloadPath(accountId, folderId, uid);
+    triggerDownload(buildDownloadUrl(path, downloadToken));
   }
 
   if (attachments.length === 0) return null;
@@ -2006,24 +2012,23 @@ function AttachmentsList({
           <button
             type="button"
             onClick={handleDownloadAll}
-            disabled={downloadingZip}
+            disabled={!downloadToken}
             className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs hover:bg-surface-hover disabled:opacity-60"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
             </svg>
-            {downloadingZip ? "…" : t("reader.downloadAllZip")}
+            {t("reader.downloadAllZip")}
           </button>
         ) : null}
       </div>
-      {error ? <p className="mb-2 text-xs text-danger">{error}</p> : null}
       <div className="flex flex-wrap gap-2">
         {attachments.map((att) => (
           <button
             type="button"
             key={att.index}
             onClick={() => handleDownload(att)}
-            disabled={downloadingIndex === att.index}
+            disabled={!downloadToken}
             title={att.filename}
             className="flex max-w-52 items-center gap-2 rounded-xl border border-border px-3 py-2 text-left text-sm hover:bg-surface-hover disabled:opacity-60"
           >
@@ -2033,9 +2038,7 @@ function AttachmentsList({
               </svg>
             </span>
             <span className="min-w-0">
-              <span className="block truncate font-medium">
-                {downloadingIndex === att.index ? "…" : att.filename}
-              </span>
+              <span className="block truncate font-medium">{att.filename}</span>
               <span className="block text-xs text-muted-foreground">{formatAttachmentSize(att.size)}</span>
             </span>
           </button>
